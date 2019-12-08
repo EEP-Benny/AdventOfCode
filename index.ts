@@ -1,7 +1,7 @@
 import { formatFilename } from './utils';
 
 async function printSolutions(year = 2019) {
-    for (let day = 1; day <= 24; day++) {
+    for (let day = 25; day >= 1; day--) {
         try {
             let { solution1, solution2 } = await import(formatFilename(day, year))
             const outputs = [`Day ${day}`]
