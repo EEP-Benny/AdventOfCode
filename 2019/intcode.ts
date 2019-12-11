@@ -1,7 +1,12 @@
 // Intcode computer, needed on multiple days
 
-export function isImmediateMode(i: number, opcodeValue: number) {
-    return Math.floor((opcodeValue / Math.pow(10, i + 1)) % 10) == 1;
+export enum Mode {
+    Position = 0,
+    Immediate = 1,
+    Relative = 2,
+}
+export function getMode(i: number, opcodeValue: number): Mode {
+    return Math.floor((opcodeValue / Math.pow(10, i + 1)) % 10);
 }
 
 export enum OpCode {
@@ -13,38 +18,58 @@ export enum OpCode {
     JumpIfFalse = 6,
     LessThan = 7,
     Equals = 8,
+    RelativeBaseOffset = 9,
     Halt = 99,
 }
 export class IntcodeComputer {
     private instructionPointer = 0;
+    private relativeBase = 0;
     private memory: number[];
     private lastOpcode: OpCode;
 
     public nextInputs: number[] = [];
     public lastOutputs: number[] = [];
+    public stepCount = 0;
     constructor(program: number[], inputs: number[] = []) {
         this.memory = [...program]; //make a copy to be sure
         this.nextInputs = inputs;
     }
 
+    private readMemory(index: number) {
+        return this.memory[index] || 0; // "converts" every undefined to 0
+    }
+    private writeMemory(index: number, data: number) {
+        this.memory[index] = data;
+    }
+
     public step() {
-        const opcodeValue = this.memory[this.instructionPointer];
+        const opcodeValue = this.readMemory(this.instructionPointer);
         const opcode: OpCode = opcodeValue % 100;
         this.lastOpcode = opcode;
-        const param = (i: number) => this.memory[this.instructionPointer + i];
-        const value = (i: number) => isImmediateMode(i, opcodeValue) ? param(i) : this.memory[param(i)];
+        const param = (i: number) => this.readMemory(this.instructionPointer + i);
+        const address = (i: number) => {
+            switch (getMode(i, opcodeValue)) {
+                case Mode.Position:
+                    return param(i);
+                case Mode.Relative:
+                    return this.relativeBase + param(i);
+                default:
+                    return null;
+            }
+        }
+        const value = (i: number) => address(i) !== null ? this.readMemory(address(i)) : param(i);
 
         switch (opcode) {
             case OpCode.Addition:
-                this.memory[param(3)] = value(1) + value(2);
+                this.writeMemory(address(3), value(1) + value(2));
                 this.instructionPointer += 4;
                 break;
             case OpCode.Multiplication:
-                this.memory[param(3)] = value(1) * value(2);
+                this.writeMemory(address(3), value(1) * value(2));
                 this.instructionPointer += 4;
                 break;
             case OpCode.Input:
-                this.memory[param(1)] = this.nextInputs.shift();
+                this.writeMemory(address(1), this.nextInputs.shift());
                 this.instructionPointer += 2;
                 break;
             case OpCode.Output:
@@ -66,12 +91,16 @@ export class IntcodeComputer {
                 }
                 break;
             case OpCode.LessThan:
-                this.memory[param(3)] = (value(1) < value(2)) ? 1 : 0;
+                this.writeMemory(address(3), (value(1) < value(2)) ? 1 : 0);
                 this.instructionPointer += 4;
                 break;
             case OpCode.Equals:
-                this.memory[param(3)] = (value(1) === value(2)) ? 1 : 0;
+                this.writeMemory(address(3), (value(1) === value(2)) ? 1 : 0);
                 this.instructionPointer += 4;
+                break;
+            case OpCode.RelativeBaseOffset:
+                this.relativeBase += value(1);
+                this.instructionPointer += 2;
                 break;
             case OpCode.Halt:
                 this.instructionPointer += 1;
@@ -79,6 +108,7 @@ export class IntcodeComputer {
             default:
                 throw `unknown opcode ${opcode} at position ${this.instructionPointer}`;
         }
+        this.stepCount++;
     }
 
     public runUntilNextOutput(): number | null {

@@ -1,13 +1,15 @@
-import { isImmediateMode, IntcodeComputer, } from './intcode';
+import { IntcodeComputer, getMode, Mode, } from './intcode';
 
-test('determining immediate mode', () => {
-    expect(isImmediateMode(1, 99)).toBe(false);
-    expect(isImmediateMode(1, 100)).toBe(true);
-    expect(isImmediateMode(2, 100)).toBe(false);
-    expect(isImmediateMode(2, 1000)).toBe(true);
-    expect(isImmediateMode(3, 1000)).toBe(false);
-    expect(isImmediateMode(3, 10000)).toBe(true);
-    expect(isImmediateMode(3, 11111)).toBe(true);
+test('determining mode', () => {
+    expect(getMode(1, 99)).toBe(Mode.Position);
+    expect(getMode(1, 100)).toBe(Mode.Immediate);
+    expect(getMode(2, 100)).toBe(Mode.Position);
+    expect(getMode(2, 1000)).toBe(Mode.Immediate);
+    expect(getMode(3, 1000)).toBe(Mode.Position);
+    expect(getMode(3, 10000)).toBe(Mode.Immediate);
+    expect(getMode(3, 11111)).toBe(Mode.Immediate);
+    expect(getMode(1, 204)).toBe(Mode.Relative);
+    expect(getMode(3, 20004)).toBe(Mode.Relative);
 })
 
 test('program run', () => {
@@ -76,4 +78,18 @@ test('jump test', () => {
     expect(outputFromInput(programLarge, 8)).toBe(1000);
     expect(outputFromInput(programLarge, 9)).toBe(1001);
     expect(outputFromInput(programLarge, 10)).toBe(1001);
+})
+
+test("program run, output", () => {
+
+    const programQuine = [109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99];
+    const compQuine = new IntcodeComputer(programQuine);
+    compQuine.runUntilEnd();
+    expect(compQuine.lastOutputs.reverse()).toEqual(programQuine);
+
+    const comp16 = new IntcodeComputer([1102, 34915192, 34915192, 7, 4, 7, 99, 0]);
+    expect(comp16.runUntilNextOutput()).toBe(1219070632396864);
+
+    const compLarge = new IntcodeComputer([104, 1125899906842624, 99]);
+    expect(compLarge.runUntilNextOutput()).toBe(1125899906842624);
 })
