@@ -30,6 +30,7 @@ export class IntcodeComputer {
     public nextInputs: number[] = [];
     public lastOutputs: number[] = [];
     public stepCount = 0;
+    public inputFn = () => this.nextInputs.shift();
     constructor(program: number[], inputs: number[] = []) {
         this.memory = [...program]; //make a copy to be sure
         this.nextInputs = inputs;
@@ -69,7 +70,7 @@ export class IntcodeComputer {
                 this.instructionPointer += 4;
                 break;
             case OpCode.Input:
-                this.writeMemory(address(1), this.nextInputs.shift());
+                this.writeMemory(address(1), this.inputFn());
                 this.instructionPointer += 2;
                 break;
             case OpCode.Output:
@@ -111,9 +112,13 @@ export class IntcodeComputer {
         this.stepCount++;
     }
 
+    public hasHalted(): boolean {
+        return this.lastOpcode === OpCode.Halt;
+    }
+
     public runUntilNextOutput(): number | null {
         do {
-            if (this.lastOpcode === OpCode.Halt) {
+            if (this.hasHalted()) {
                 return null;
             }
             this.step();
@@ -122,7 +127,7 @@ export class IntcodeComputer {
     }
 
     public runUntilEnd() {
-        while (this.lastOpcode !== OpCode.Halt) {
+        while (!this.hasHalted()) {
             this.step();
         }
     }
