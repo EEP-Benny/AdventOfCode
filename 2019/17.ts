@@ -53,3 +53,37 @@ export function solution1() {
     const gridAsString = String.fromCharCode(...output);
     return sumOfAlignmentParameters(gridAsString)
 }
+
+function printLinewiseOutput(comp: IntcodeComputer) {
+    while (!comp.hasHalted()) {
+        comp.step();
+        if (comp.lastOutputs[0] === "\n".charCodeAt(0)) {
+            console.log(String.fromCharCode(...comp.lastOutputs.reverse()).trim());
+            comp.lastOutputs = [];
+        }
+    }
+}
+
+export function stringToAsciiArray(string: string) {
+    const asciiKeys = [];
+    for (let i = 0; i < string.length; i++) {
+        asciiKeys.push(string.charCodeAt(i));
+    }
+    return asciiKeys;
+}
+
+export function solution2() {
+    // handcrafted
+    const main = "A,B,A,C,B,C,B,C,A,C"
+    const A = "R,12,L,10,R,12"
+    const B = "L,8,R,10,R,6"
+    const C = "R,12,L,10,R,10,L,8"
+    const input = `${main}\n${A}\n${B}\n${C}\nn\n`
+
+    const program = getProgram();
+    program[0] = 2;
+    const comp = new IntcodeComputer(program, stringToAsciiArray(input));
+    comp.runUntilEnd();
+
+    return comp.lastOutputs[0];
+}
