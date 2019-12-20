@@ -39,7 +39,7 @@ test("stringToResult", () => {
     expect(stringToResult("69317163492948606335995924319873")).toBe("52432133");
 });
 
-xtest("stringToLongResult", () => {
+test("stringToLongResult", () => {
     expect(stringToLongResult("03036732577212944063491565474664")).toBe("84462026");
     expect(stringToLongResult("02935109699940807407585447034323")).toBe("78725270");
     expect(stringToLongResult("03081770884921959731165446850517")).toBe("53553731");
