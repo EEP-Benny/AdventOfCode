@@ -1,10 +1,6 @@
 import { Map2D } from './map2d';
-import { getInputArray } from '../utils';
+import { getProgram } from '../utils';
 import { IntcodeComputer } from './intcode';
-
-function getProgram() {
-    return getInputArray({ day: 17, separator: ',' }).map(s => parseInt(s, 10));
-}
 
 export function convertToMap2D(gridAsString: string): Map2D<string> {
     const map = new Map2D<string>();
@@ -47,11 +43,11 @@ export function sumOfAlignmentParameters(gridAsString: string): number {
 }
 
 export function solution1() {
-    const comp = new IntcodeComputer(getProgram());
+    const comp = new IntcodeComputer(getProgram({ day: 17 }));
     comp.runUntilEnd();
     const output = comp.lastOutputs.reverse();
     const gridAsString = String.fromCharCode(...output);
-    return sumOfAlignmentParameters(gridAsString)
+    return sumOfAlignmentParameters(gridAsString);
 }
 
 function printLinewiseOutput(comp: IntcodeComputer) {
@@ -74,13 +70,13 @@ export function stringToAsciiArray(string: string) {
 
 export function solution2() {
     // handcrafted
-    const main = "A,B,A,C,B,C,B,C,A,C"
-    const A = "R,12,L,10,R,12"
-    const B = "L,8,R,10,R,6"
-    const C = "R,12,L,10,R,10,L,8"
-    const input = `${main}\n${A}\n${B}\n${C}\nn\n`
+    const main = "A,B,A,C,B,C,B,C,A,C";
+    const A = "R,12,L,10,R,12";
+    const B = "L,8,R,10,R,6";
+    const C = "R,12,L,10,R,10,L,8";
+    const input = `${main}\n${A}\n${B}\n${C}\nn\n`;
 
-    const program = getProgram();
+    const program = getProgram({ day: 17 });
     program[0] = 2;
     const comp = new IntcodeComputer(program, stringToAsciiArray(input));
     comp.runUntilEnd();

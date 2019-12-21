@@ -1,10 +1,6 @@
-import { getInputArray } from '../utils';
+import { getProgram } from '../utils';
 import { IntcodeComputer } from './intcode';
 import { Map2D } from './map2d';
-
-function getProgram() {
-    return getInputArray({ day: 13, separator: ',' }).map(s => parseInt(s, 10));
-}
 
 enum Tile {
     Empty = 0,
@@ -14,7 +10,7 @@ enum Tile {
     Ball = 4,
 }
 export function solution1() {
-    const comp = new IntcodeComputer(getProgram());
+    const comp = new IntcodeComputer(getProgram({ day: 13 }));
     const map = new Map2D<Tile>();
 
     while (!comp.hasHalted()) {
@@ -26,7 +22,7 @@ export function solution1() {
     let blockCount = 0;
     map.forEach(tile => {
         if (tile === Tile.Block) {
-            blockCount++
+            blockCount++;
         }
     });
     return blockCount;
@@ -38,7 +34,7 @@ const markers = new Map<Tile, string>([
     [Tile.Block, 'X'],
     [Tile.Paddle, '-'],
     [Tile.Ball, 'O'],
-])
+]);
 function printCurrentState(map: Map2D<Tile>, score: number) {
     if (false) {
         console.clear();
@@ -48,7 +44,7 @@ function printCurrentState(map: Map2D<Tile>, score: number) {
 }
 
 export function solution2() {
-    const program = getProgram();
+    const program = getProgram({ day: 13 });
     program[0] = 2; // fake insert coin
     const comp = new IntcodeComputer(program);
     const map = new Map2D<Tile>();
@@ -61,7 +57,7 @@ export function solution2() {
         if (paddleX < ballX) return 1;
         else if (paddleX > ballX) return -1;
         else return 0;
-    }
+    };
 
     while (!comp.hasHalted()) {
         const x = comp.runUntilNextOutput();
@@ -71,8 +67,8 @@ export function solution2() {
             scoreDisplay = output;
         } else {
             map.set(x, y, output);
-            if (output === Tile.Ball) { ballX = x }
-            if (output === Tile.Paddle) { paddleX = x }
+            if (output === Tile.Ball) { ballX = x; }
+            if (output === Tile.Paddle) { paddleX = x; }
         }
     }
     printCurrentState(map, scoreDisplay);

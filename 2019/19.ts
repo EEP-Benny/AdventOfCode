@@ -1,11 +1,7 @@
-import { getInputArray } from '../utils';
+import { getProgram } from '../utils';
 import { IntcodeComputer } from './intcode';
 
-function getProgram() {
-    return getInputArray({ day: 19, separator: ',' }).map(s => parseInt(s, 10));
-}
-
-const prog = getProgram();
+const prog = getProgram({ day: 19 });
 function isPulled(x: number, y: number) {
     const comp = new IntcodeComputer(prog, [x, y]);
     return comp.runUntilNextOutput() === 1;

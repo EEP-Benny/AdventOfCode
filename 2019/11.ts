@@ -1,14 +1,10 @@
-import { getInputArray } from '../utils';
+import { getProgram } from '../utils';
 import { IntcodeComputer } from './intcode';
-
-function getProgram() {
-    return getInputArray({ day: 11, separator: ',' }).map(s => parseInt(s, 10));
-}
 
 enum Color { Black = 0, White = 1, }
 enum Direction { Up, Right, Down, Left }
 const position = (x: number, y: number) => `${x},${y}`;
-const posXY = (pos: string) => { const [x, y] = pos.split(','); return { x: parseInt(x), y: parseInt(y) }; }
+const posXY = (pos: string) => { const [x, y] = pos.split(','); return { x: parseInt(x), y: parseInt(y) }; };
 function turnDirection(currentDirection: Direction, shouldturnLeft: boolean) {
     switch (currentDirection) {
         case Direction.Up:
@@ -52,7 +48,7 @@ class EmergencyHullPaintingRobot {
             throw "finished";
 
         }
-        const shouldturnLeft = this.comp.runUntilNextOutput() == 0
+        const shouldturnLeft = this.comp.runUntilNextOutput() == 0;
         return [newColor, shouldturnLeft];
     }
     private step() {
@@ -78,7 +74,7 @@ class EmergencyHullPaintingRobot {
             const { x, y } = posXY(pos);
             xCoordinates.push(x);
             yCoordinates.push(y);
-        })
+        });
         const xMin = Math.min(...xCoordinates), xMax = Math.max(...xCoordinates);
         const yMin = Math.min(...yCoordinates), yMax = Math.max(...yCoordinates);
         const grid = [[]] as Color[][];
@@ -93,13 +89,13 @@ class EmergencyHullPaintingRobot {
 }
 
 export function solution1() {
-    const robot = new EmergencyHullPaintingRobot(getProgram(), Color.Black);
+    const robot = new EmergencyHullPaintingRobot(getProgram({ day: 11 }), Color.Black);
     robot.runUntilEnd();
     return robot.paintedPanels.size;
 }
 
 export function solution2() {
-    const robot = new EmergencyHullPaintingRobot(getProgram(), Color.White);
+    const robot = new EmergencyHullPaintingRobot(getProgram({ day: 11 }), Color.White);
     robot.runUntilEnd();
     const grid = robot.getPanelGrid();
     const mappedGrid = grid.map((row: Color[]) => row.map(c => c == Color.White ? "█" : " "));

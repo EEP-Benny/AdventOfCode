@@ -1,4 +1,4 @@
-import { getInputArray } from '../utils';
+import { getProgram } from '../utils';
 
 export function isImmediateMode(i: number, opcodeValue: number) {
     return Math.floor((opcodeValue / Math.pow(10, i + 1)) % 10) == 1;
@@ -9,9 +9,7 @@ export function run(memory: number[], inputFn = () => 1, outputFn = console.log)
         const opcodeValue = memory[instructionPointer];
         const opcode = opcodeValue % 100;
         const param = (i: number) => memory[instructionPointer + i];
-        const value = (i: number) => {
-            return isImmediateMode(i, opcodeValue) ? param(i) : memory[param(i)];
-        }
+        const value = (i: number) => isImmediateMode(i, opcodeValue) ? param(i) : memory[param(i)];
         switch (opcode) {
             case 1: // addition
                 memory[param(3)] = value(1) + value(2);
@@ -60,11 +58,11 @@ export function run(memory: number[], inputFn = () => 1, outputFn = console.log)
     }
 }
 
-export function outputFromInput(program, input: number) {
+export function outputFromInput(program: number[], input: number) {
     try {
         let lastOutput: number;
         const inputFn = () => input;
-        const outputFn = (x: number) => { lastOutput = x };
+        const outputFn = (x: number) => { lastOutput = x; };
         run(program, inputFn, outputFn);
         return lastOutput;
     } catch (error) {
@@ -72,14 +70,10 @@ export function outputFromInput(program, input: number) {
     }
 }
 
-function getProgram() {
-    return getInputArray({ day: 5, separator: ',' }).map(s => parseInt(s, 10));
-}
-
 export function solution1() {
-    return outputFromInput(getProgram(), 1);
+    return outputFromInput(getProgram({ day: 5 }), 1);
 }
 
 export function solution2() {
-    return outputFromInput(getProgram(), 5);
+    return outputFromInput(getProgram({ day: 5 }), 5);
 }
