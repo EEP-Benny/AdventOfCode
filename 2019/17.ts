@@ -1,10 +1,9 @@
 import { Map2D } from './map2d';
 import { getProgram } from '../utils';
-import { IntcodeComputer } from './intcode';
+import { AsciiIntcodeComputer } from './intcodeascii';
 
-export function convertToMap2D(gridAsString: string): Map2D<string> {
+export function convertToMap2D(lines: string[]): Map2D<string> {
     const map = new Map2D<string>();
-    const lines = gridAsString.trim().split("\n");
     lines.forEach((line, y) => {
         const chars = line.split("");
         chars.forEach((char, x) => {
@@ -35,37 +34,17 @@ export function alignmentParameter([x, y]: [number, number]): number {
     return x * y;
 }
 
-export function sumOfAlignmentParameters(gridAsString: string): number {
-    const map = convertToMap2D(gridAsString);
+export function sumOfAlignmentParameters(lines: string[]): number {
+    const map = convertToMap2D(lines);
     const intersections = getIntersectionPoints(map);
     const alignmentParameters = intersections.map(alignmentParameter);
     return alignmentParameters.reduce((a, b) => a + b);
 }
 
 export function solution1() {
-    const comp = new IntcodeComputer(getProgram({ day: 17 }));
+    const comp = new AsciiIntcodeComputer(getProgram({ day: 17 }));
     comp.runUntilEnd();
-    const output = comp.lastOutputs.reverse();
-    const gridAsString = String.fromCharCode(...output);
-    return sumOfAlignmentParameters(gridAsString);
-}
-
-function printLinewiseOutput(comp: IntcodeComputer) {
-    while (!comp.hasHalted()) {
-        comp.step();
-        if (comp.lastOutputs[0] === "\n".charCodeAt(0)) {
-            console.log(String.fromCharCode(...comp.lastOutputs.reverse()).trim());
-            comp.lastOutputs = [];
-        }
-    }
-}
-
-export function stringToAsciiArray(string: string) {
-    const asciiKeys = [];
-    for (let i = 0; i < string.length; i++) {
-        asciiKeys.push(string.charCodeAt(i));
-    }
-    return asciiKeys;
+    return sumOfAlignmentParameters(comp.lastOutputLines);
 }
 
 export function solution2() {
@@ -74,11 +53,10 @@ export function solution2() {
     const A = "R,12,L,10,R,12";
     const B = "L,8,R,10,R,6";
     const C = "R,12,L,10,R,10,L,8";
-    const input = `${main}\n${A}\n${B}\n${C}\nn\n`;
 
     const program = getProgram({ day: 17 });
     program[0] = 2;
-    const comp = new IntcodeComputer(program, stringToAsciiArray(input));
+    const comp = new AsciiIntcodeComputer(program, [main, A, B, C, "n"]);
     comp.runUntilEnd();
 
     return comp.lastOutputs[0];
