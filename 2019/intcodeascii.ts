@@ -16,11 +16,11 @@ export class AsciiIntcodeComputer extends IntcodeComputer {
 
     public get lastOutputLines(): string[] {
         const asciiCharacters = [...this.lastOutputs].reverse();
-        return String.fromCharCode(...asciiCharacters).trim().split('\n');
+        return String.fromCharCode(...asciiCharacters).split('\n');
     }
 
     public runUntilNextLine(): string {
         while (!this.hasHalted() && this.runUntilNextOutput() !== "\n".charCodeAt(0)) { }
-        return this.lastOutputLines[0];
+        return this.lastOutputLines[this.lastOutputLines.length - 2];
     }
 }
