@@ -1,16 +1,26 @@
+import { performance } from "perf_hooks";
 import { formatFilename } from "./utils";
 
 const defaultYear = new Date().getFullYear();
+
+function timeFunction<T>(f: () => T): [T, number] {
+  const t0 = performance.now();
+  const result = f();
+  const t1 = performance.now();
+  return [result, t1 - t0];
+}
 
 async function printSolution(day: number, year = defaultYear) {
   try {
     let { solution1, solution2 } = await import(formatFilename(day, year));
     const outputs = [`Day ${day}`];
     if (typeof solution1 === "function") {
-      outputs.push(`Solution 1: ${solution1()}`);
+      const [result, ms] = timeFunction(solution1);
+      outputs.push(`Solution 1: ${result} (${ms.toFixed(1)}ms)`);
     }
     if (typeof solution2 === "function") {
-      outputs.push(`Solution 2: ${solution2()}`);
+      const [result, ms] = timeFunction(solution2);
+      outputs.push(`Solution 2: ${result} (${ms.toFixed(1)}ms)`);
     }
     console.log(outputs.join(" - "));
   } catch (error) {
