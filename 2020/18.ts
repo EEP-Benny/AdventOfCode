@@ -21,7 +21,11 @@ export function parseExpressionArray(str: string): ExpressionArray {
     .replace(/\*/g, ',"*",');
   return JSON.parse("[" + transformedString + "]");
 }
-export function parseExpressionWithoutPrecedence(str: string): Expression {
+
+function parseExpression(
+  str: string,
+  getSplitIndex: (expArray: ("+" | "*" | ExpressionArray)[]) => number
+) {
   function parseArray(expArray: ExpressionArray): Expression {
     if (typeof expArray === "number") {
       return expArray;
@@ -32,45 +36,30 @@ export function parseExpressionWithoutPrecedence(str: string): Expression {
       }
       return parseArray(expArray[0]);
     }
-    const lastOperator = expArray[expArray.length - 2];
-    if (lastOperator === "*" || lastOperator === "+") {
+    const splitIndex = getSplitIndex(expArray);
+    const operator = expArray[splitIndex];
+    if (typeof operator === "string") {
       return {
-        operator: lastOperator,
-        lhs: parseArray(expArray.slice(0, expArray.length - 2)),
-        rhs: parseArray(expArray.slice(expArray.length - 1)),
+        operator: operator,
+        lhs: parseArray(expArray.slice(0, splitIndex)),
+        rhs: parseArray(expArray.slice(splitIndex + 1)),
       };
+    } else {
+      throw `Can't split expression ${expArray} at index ${splitIndex}: ${operator} is not a valid operator`;
     }
-    throw `Expected operator, but found ${lastOperator} for ${expArray}`;
   }
   return parseArray(parseExpressionArray(str));
 }
+export function parseExpressionWithoutPrecedence(str: string): Expression {
+  return parseExpression(str, (expArray) => expArray.length - 2);
+}
 
 export function parseExpressionWithInvertedPrecedence(str: string): Expression {
-  function parseArray(expArray: ExpressionArray): Expression {
-    if (typeof expArray === "number") {
-      return expArray;
-    }
-    if (expArray.length === 1) {
-      if (typeof expArray[0] === "string") {
-        throw "Single operator found";
-      }
-      return parseArray(expArray[0]);
-    }
-    const indexOfMultiplication = expArray.lastIndexOf("*");
-    if (indexOfMultiplication >= 0) {
-      return {
-        operator: "*",
-        lhs: parseArray(expArray.slice(0, indexOfMultiplication)),
-        rhs: parseArray(expArray.slice(indexOfMultiplication + 1)),
-      };
-    } else
-      return {
-        operator: "+",
-        lhs: parseArray(expArray.slice(0, expArray.length - 2)),
-        rhs: parseArray(expArray.slice(expArray.length - 1)),
-      };
-  }
-  return parseArray(parseExpressionArray(str));
+  return parseExpression(str, (expArray) =>
+    expArray.lastIndexOf("*") >= 0
+      ? expArray.lastIndexOf("*")
+      : expArray.length - 2
+  );
 }
 
 export function evaluateExpression(exp: Expression): number {
