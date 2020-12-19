@@ -9,44 +9,17 @@ export type Expression =
       rhs: Expression;
     };
 
+/**
+ * transforms the expression into a JSON array
+ * @example `1 + (2 * 3)` -> `[1,"+",[2,"*",3]]`
+ */
 export function parseExpressionArray(str: string): ExpressionArray {
-  str = str.trim();
-  const strAsNumber = +str;
-  if (!Number.isNaN(strAsNumber)) {
-    return strAsNumber;
-  }
-  const arr: ExpressionArray = [];
-  let openParentheses = 0;
-  let lastSplitAtIndex = 0;
-  for (let i = 0; i <= str.length; i++) {
-    switch (str[i]) {
-      case "(":
-        openParentheses++;
-        break;
-      case ")":
-        openParentheses--;
-        break;
-      case "+":
-      case "*":
-        if (openParentheses === 0) {
-          arr.push(
-            parseExpressionArray(str.substring(lastSplitAtIndex, i - 1))
-          );
-          arr.push(str[i] as "+" | "*");
-          lastSplitAtIndex = i + 1;
-        }
-        break;
-    }
-  }
-  if (lastSplitAtIndex === 0) {
-    if (str.startsWith("(") && str.endsWith(")")) {
-      return parseExpressionArray(str.substring(1, str.length - 1));
-    }
-    // we didn't make any progress
-    throw `Illegal expression: ${str}`;
-  }
-  arr.push(parseExpressionArray(str.substring(lastSplitAtIndex)));
-  return arr;
+  const transformedString = str
+    .replace(/\(/g, "[")
+    .replace(/\)/g, "]")
+    .replace(/\+/g, ',"+",')
+    .replace(/\*/g, ',"*",');
+  return JSON.parse("[" + transformedString + "]");
 }
 export function parseExpressionWithoutPrecedence(str: string): Expression {
   function parseArray(expArray: ExpressionArray): Expression {
