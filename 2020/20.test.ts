@@ -4,7 +4,9 @@ import {
   Orientation,
   pixelsToIntegers,
   stitchRecord,
+  transformAndCropPixels,
   transformBorderIds,
+  transformPixels,
 } from "./20";
 
 const exampleTile = `
@@ -157,6 +159,71 @@ test("transformBorderIds", () => {
   );
 });
 
+test("transformAndCropPixels", () => {
+  const testTransform = (orientation: Orientation) =>
+    transformAndCropPixels(["....", ".ab.", ".dc.", "...."], orientation);
+  expect(testTransform(Orientation.top)).toEqual(["ab", "dc"]);
+  expect(testTransform(Orientation.topFlipped)).toEqual(["ba", "cd"]);
+  expect(testTransform(Orientation.right)).toEqual(["da", "cb"]);
+  expect(testTransform(Orientation.rightFlipped)).toEqual(["cb", "da"]);
+  expect(testTransform(Orientation.bottom)).toEqual(["cd", "ba"]);
+  expect(testTransform(Orientation.bottomFlipped)).toEqual(["dc", "ab"]);
+  expect(testTransform(Orientation.left)).toEqual(["bc", "ad"]);
+  expect(testTransform(Orientation.leftFlipped)).toEqual(["ad", "bc"]);
+  expect(
+    transformAndCropPixels(
+      [
+        "#.#.#####.",
+        ".#..######",
+        "..#.......",
+        "######....",
+        "####.#..#.",
+        ".#...#.##.",
+        "#.#####.##",
+        "..#.###...",
+        "..#.......",
+        "..#.###...",
+      ],
+      Orientation.top
+    )
+  ).toEqual([
+    "#..#####",
+    ".#......",
+    "#####...",
+    "###.#..#",
+    "#...#.##",
+    ".#####.#",
+    ".#.###..",
+    ".#......",
+  ]);
+  expect(
+    transformAndCropPixels(
+      [
+        "..##.#..#.",
+        "##..#.....",
+        "#...##..#.",
+        "####.#...#",
+        "##.##.###.",
+        "##...#.###",
+        ".#.#.#..##",
+        "..#....#..",
+        "###...#.#.",
+        "..###..###",
+      ],
+      Orientation.bottomFlipped
+    )
+  ).toEqual([
+    "##...#.#",
+    ".#....#.",
+    "#.#.#..#",
+    "#...#.##",
+    "#.##.###",
+    "###.#...",
+    "...##..#",
+    "#..#....",
+  ]);
+});
+
 test("JigsawPuzzle.matchesPerTileId", () => {
   const puzzle = new JigsawPuzzle(exampleTiles);
   expect(puzzle.matchesPerTileId).toEqual(
@@ -238,4 +305,46 @@ test("JigsawPuzzle.findTileArrangement", () => {
   expect(stitchedTiles[2][0]?.tileId).toBe("1951");
   expect(stitchedTiles[2][1]?.tileId).toBe("2729");
   expect(stitchedTiles[2][2]?.tileId).toBe("2971");
+});
+
+test("JigsawPuzzle.getStitchedImage", () => {
+  expect(
+    transformPixels(
+      new JigsawPuzzle(exampleTiles).getStitchedImage(),
+      Orientation.right
+    )
+  ).toEqual([
+    ".#.#..#.##...#.##..#####",
+    "###....#.#....#..#......",
+    "##.##.###.#.#..######...",
+    "###.#####...#.#####.#..#",
+    "##.#....#.##.####...#.##",
+    "...########.#....#####.#",
+    "....#..#...##..#.#.###..",
+    ".####...#..#.....#......",
+    "#..#.##..#..###.#.##....",
+    "#.####..#.####.#.#.###..",
+    "###.#.#...#.######.#..##",
+    "#.####....##..########.#",
+    "##..##.#...#...#.#.#.#..",
+    "...#..#..#.#.##..###.###",
+    ".#.#....#.##.#...###.##.",
+    "###.#...#..#.##.######..",
+    ".#.#.###.##.##.#..#.##..",
+    ".####.###.#...###.#..#.#",
+    "..#.#..#..#.#.#.####.###",
+    "#..####...#.#.#.###.###.",
+    "#####..#####...###....##",
+    "#.##..#..#...#..####...#",
+    ".#.###..##..##..####.##.",
+    "...###...##...#...#..###",
+  ]);
+});
+
+test("JigsawPuzzle.countSeaMonsters", () => {
+  expect(new JigsawPuzzle(exampleTiles).countSeaMonsters()).toBe(2);
+});
+
+test("JigsawPuzzle.getHabitatRoughness", () => {
+  expect(new JigsawPuzzle(exampleTiles).getHabitatRoughness()).toBe(273);
 });
