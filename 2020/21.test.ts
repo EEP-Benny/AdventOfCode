@@ -2,6 +2,7 @@ import {
   countSafeIngredients,
   getAllergenToIngredientMap,
   getAllergenToPotentialIngredientsMap,
+  getCanonicalDangerousIngredientList,
   parseInputLine,
 } from "./21";
 
@@ -57,4 +58,10 @@ test("getAllergenToIngredientMap", () => {
 
 test("countSafeIngredients", () => {
   expect(countSafeIngredients(exampleFoods)).toBe(5);
+});
+
+test("getCanonicalDangerousIngredientList", () => {
+  expect(getCanonicalDangerousIngredientList(exampleFoods)).toEqual(
+    "mxmxvkd,sqjhc,fvjkl"
+  );
 });

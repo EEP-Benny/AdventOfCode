@@ -77,7 +77,22 @@ export function countSafeIngredients(inputLines: string[]) {
   return safeIngredientsCount;
 }
 
+export function getCanonicalDangerousIngredientList(inputLines: string[]) {
+  const allergenToIngredientMap = getAllergenToIngredientMap(inputLines);
+  const sortedEntries = Array.from(
+    allergenToIngredientMap.entries()
+  ).sort(([allergen1], [allergen2]) => (allergen1 > allergen2 ? 1 : -1));
+  const sortedIngredients = sortedEntries.map(
+    ([allergen, ingredient]) => ingredient
+  );
+  return sortedIngredients.join(",");
+}
+
 export function solution1() {
   const inputLines = getInputArray({ day: 21, year: 2020, separator: "\n" });
   return countSafeIngredients(inputLines);
+}
+export function solution2() {
+  const inputLines = getInputArray({ day: 21, year: 2020, separator: "\n" });
+  return getCanonicalDangerousIngredientList(inputLines);
 }
