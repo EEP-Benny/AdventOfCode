@@ -1,5 +1,4 @@
-import { info } from "console";
-import { CombatGame } from "./22";
+import { CombatGame, RecursiveCombatGame } from "./22";
 
 const input = `
 Player 1:
@@ -18,13 +17,13 @@ Player 2:
 `.trim();
 
 test("CombatGame.constructor", () => {
-  const game = new CombatGame(input);
+  const game = CombatGame.fromInput(input);
   expect(game.player1Cards).toEqual([9, 2, 6, 3, 1]);
   expect(game.player2Cards).toEqual([5, 8, 4, 7, 10]);
 });
 
 test("CombatGame.playSingleRound", () => {
-  const game = new CombatGame(input);
+  const game = CombatGame.fromInput(input);
   game.playSingleRound();
   expect(game.roundCounter).toEqual(1);
   expect(game.player1Cards).toEqual([2, 6, 3, 1, 9, 5]);
@@ -38,7 +37,7 @@ test("CombatGame.playSingleRound", () => {
 });
 
 test("CombatGame.playUntilWin", () => {
-  const game = new CombatGame(input);
+  const game = CombatGame.fromInput(input);
   game.playUntilWin();
   expect(game.roundCounter).toEqual(29);
   expect(game.player1Cards).toEqual([]);
@@ -46,6 +45,11 @@ test("CombatGame.playUntilWin", () => {
 });
 
 test("CombatGame.getWinningScore", () => {
-  const game = new CombatGame(input);
+  const game = CombatGame.fromInput(input);
   expect(game.getWinningScore()).toEqual(306);
+});
+
+test("RecursiveCombatGame", () => {
+  const game = RecursiveCombatGame.fromInput(input);
+  expect(game.getWinningScore()).toEqual(291);
 });
