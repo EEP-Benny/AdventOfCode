@@ -2,7 +2,7 @@ import { CupGame } from "./23";
 
 test("CupGame", () => {
   const game = new CupGame("32415");
-  expect(game.cups).toEqual([3, 2, 4, 1, 5]);
+  expect(game.getCupArray()).toEqual([3, 2, 4, 1, 5]);
   expect(game.lowestCup).toEqual(1);
   expect(game.highestCup).toEqual(5);
 });
@@ -13,36 +13,24 @@ test("CupGame.play", () => {
   expect(game.highestCup).toEqual(9);
 
   expect(game.roundCounter).toEqual(0);
-  expect(game.currentCupIndex).toEqual(0);
-  expect(game.cups).toEqual([3, 8, 9, 1, 2, 5, 4, 6, 7]);
+  expect(game.currentCup).toEqual(3);
+  expect(game.getCupArray(3)).toEqual([3, 8, 9, 1, 2, 5, 4, 6, 7]);
   game.playSingleRound();
   expect(game.roundCounter).toEqual(1);
-  expect(game.currentCupIndex).toEqual(1);
-  expect(game.cups).toEqual([3, 2, 8, 9, 1, 5, 4, 6, 7]);
+  expect(game.currentCup).toEqual(2);
+  expect(game.getCupArray(3)).toEqual([3, 2, 8, 9, 1, 5, 4, 6, 7]);
   game.playSingleRound();
   expect(game.roundCounter).toEqual(2);
-  expect(game.currentCupIndex).toEqual(5);
-  expect(game.cups).toEqual([8, 9, 1, 3, 2, 5, 4, 6, 7]);
+  expect(game.currentCup).toEqual(5);
+  expect(game.getCupArray(3)).toEqual([3, 2, 5, 4, 6, 7, 8, 9, 1]);
   game.playSingleRound();
   expect(game.roundCounter).toEqual(3);
-  expect(game.currentCupIndex).toEqual(9);
-  expect(game.cups).toEqual([8, 9, 1, 3, 4, 6, 7, 2, 5]);
-  // game.playSingleRound();
-  // expect(game.roundCounter).toEqual(4);
-  // expect(game.currentCupIndex).toEqual(4);
-  // expect(game.cups).toEqual([3, 2, 5, 8, 4, 6, 7, 9, 1]);
-  // game.playSingleRound();
-  // expect(game.roundCounter).toEqual(5);
-  // expect(game.currentCupIndex).toEqual(5);
-  // expect(game.cups).toEqual([9, 2, 5, 8, 4, 1, 3, 6, 7]);
-  // game.playSingleRound();
-  // expect(game.roundCounter).toEqual(6);
-  // expect(game.currentCupIndex).toEqual(6);
-  // expect(game.cups).toEqual([7, 2, 5, 8, 4, 1, 9, 3, 6]);
+  expect(game.currentCup).toEqual(8);
+  expect(game.getCupArray(7)).toEqual([7, 2, 5, 8, 9, 1, 3, 4, 6]);
   game.playUntilRound(10);
   expect(game.roundCounter).toEqual(10);
-  expect(game.currentCupIndex).toEqual(31);
-  expect(game.cups).toEqual([9, 2, 6, 5, 8, 3, 7, 4, 1]);
+  expect(game.currentCup).toEqual(8);
+  expect(game.getCupArray(5)).toEqual([5, 8, 3, 7, 4, 1, 9, 2, 6]);
 });
 
 test("CupGame.getCupLabels", () => {
@@ -55,6 +43,30 @@ test("CupGame.getCupLabels", () => {
 
 test("CupGame.expandToAMillion", () => {
   const game = new CupGame("389125467", true);
-  expect(game.cups[999999]).toEqual(1000000);
-  expect(game.cups).toHaveLength(1000000);
+  expect(game.lowestCup).toEqual(1);
+  expect(game.highestCup).toEqual(1000000);
+  expect(game.cups.getCount()).toEqual(1000000);
+  expect(game.getCupArray(999999).slice(0, 15)).toEqual([
+    999999,
+    1000000,
+    3,
+    8,
+    9,
+    1,
+    2,
+    5,
+    4,
+    6,
+    7,
+    10,
+    11,
+    12,
+    13,
+  ]);
+});
+
+test("CupGame.getProductOfCupsWithStars", () => {
+  const game = new CupGame("389125467", true);
+  game.playUntilRound(10000000);
+  expect(game.getProductOfCupsWithStars()).toEqual(149245887792);
 });

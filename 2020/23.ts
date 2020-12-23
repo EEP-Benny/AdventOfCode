@@ -1,84 +1,97 @@
 type Cup = number;
+
+type LinkedListItem<T> = {
+  value: T;
+  next: LinkedListItem<T>;
+};
+export class LinkedList<T> {
+  mapOfItems = new Map<T, LinkedListItem<T>>();
+
+  static fromArray<T>(arr: T[]) {
+    const list = new LinkedList<T>();
+    arr.forEach((item) => {
+      list.mapOfItems.set(item, { value: item, next: null });
+    });
+    for (let index = arr.length - 1; index >= 0; index--) {
+      list.mapOfItems.set(arr[index], {
+        value: arr[index],
+        next: list.get(arr[index + 1]),
+      });
+    }
+    list.get(arr[arr.length - 1]).next = list.get(arr[0]);
+    return list;
+  }
+
+  get(value: T) {
+    return this.mapOfItems.get(value);
+  }
+  getCount() {
+    return this.mapOfItems.size;
+  }
+
+  toArray(firstValue: T): T[] {
+    const arr = Array(this.getCount());
+    let item = this.get(firstValue);
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = item.value;
+      item = item.next;
+    }
+    return arr;
+  }
+}
 export class CupGame {
   // convention: the current cup is always at position 0
-  cups: Cup[];
-  currentCupIndex = 0;
+  cups: LinkedList<Cup>;
+  currentCup: Cup;
   lowestCup: Cup;
   highestCup: Cup;
   roundCounter = 0;
 
   constructor(cupsAsString: string, expandToAMillion = false) {
-    this.cups = cupsAsString.split("").map((x) => +x);
-    this.lowestCup = Math.min(...this.cups);
-    this.highestCup = Math.max(...this.cups);
+    const cupsArray = cupsAsString.split("").map((x) => +x);
+    this.currentCup = cupsArray[0];
+    this.lowestCup = Math.min(...cupsArray);
+    this.highestCup = Math.max(...cupsArray);
     if (expandToAMillion) {
-      this.cups = Array(1000000)
-        .fill(0)
-        .map((_, i) => this.cups[i] ?? i + 1);
+      for (let i = this.highestCup + 1; i <= 1000000; i++) {
+        cupsArray.push(i);
+      }
       this.highestCup = 1000000;
     }
-  }
-
-  setCup(index: number, value: Cup) {
-    this.cups[index % this.cups.length] = value;
-  }
-  getCup(index: number): Cup {
-    return this.cups[index % this.cups.length];
+    this.cups = LinkedList.fromArray(cupsArray);
   }
 
   playSingleRound() {
-    const currentCup = this.getCup(this.currentCupIndex);
-    const pickedUpCups = [1, 2, 3].map((i) =>
-      this.getCup(this.currentCupIndex + i)
-    );
+    // pick up three cups next to the current cup and remove them from the circle
+    const currentCupItem = this.cups.get(this.currentCup);
+    const firstPickedUpCupItem = currentCupItem.next;
+    const lastPickedUpCupItem = firstPickedUpCupItem.next.next;
+    const pickedUpCups = [
+      firstPickedUpCupItem.value,
+      firstPickedUpCupItem.next.value,
+      lastPickedUpCupItem.value,
+    ];
+    currentCupItem.next = lastPickedUpCupItem.next;
 
-    let destinationCup = currentCup;
+    // select a destination cup
+    let destinationCup = this.currentCup;
     while (
       pickedUpCups.includes(destinationCup) ||
-      destinationCup === currentCup
+      destinationCup === this.currentCup
     ) {
       destinationCup--;
       if (destinationCup < this.lowestCup) destinationCup = this.highestCup;
     }
-    let destinationCupIndex = this.cups.indexOf(destinationCup);
-    if (destinationCupIndex < 0) {
-      throw "couldn't find destination cup " + destinationCup;
-    }
-    while (destinationCupIndex < this.currentCupIndex - this.cups.length / 2) {
-      destinationCupIndex += this.cups.length;
-    }
-    while (destinationCupIndex > this.currentCupIndex + this.cups.length / 2) {
-      destinationCupIndex -= this.cups.length;
-    }
 
-    console.log({
-      round: this.roundCounter,
-      difference: this.currentCupIndex - destinationCupIndex,
-      currentIndex: this.currentCupIndex,
-      destinationIndex: destinationCupIndex,
-      current: currentCup,
-      destination: destinationCup,
-    });
-    if (this.currentCupIndex < destinationCupIndex) {
-      // shift forward
-      for (let i = this.currentCupIndex + 4; i <= destinationCupIndex; i++) {
-        this.setCup(i - 3, this.getCup(i));
-      }
-      for (let i = 0; i < 3; i++) {
-        this.setCup(destinationCupIndex - 2 + i, pickedUpCups[i]);
-      }
-    } else {
-      // shift backward
-      for (let i = this.currentCupIndex; i >= destinationCupIndex + 1; i--) {
-        this.setCup(i + 3, this.getCup(i));
-      }
-      for (let i = 0; i < 3; i++) {
-        this.setCup(destinationCupIndex + 1 + i, pickedUpCups[i]);
-      }
-      this.currentCupIndex += 3;
-    }
+    // place the picked up cups after the destination cup
+    const destinationCupItem = this.cups.get(destinationCup);
+    const cupAfterInsertedCupsItem = destinationCupItem.next;
+    destinationCupItem.next = firstPickedUpCupItem;
+    lastPickedUpCupItem.next = cupAfterInsertedCupsItem;
 
-    this.currentCupIndex++;
+    // select a new current cup
+    this.currentCup = currentCupItem.next.value;
+
     this.roundCounter++;
   }
 
@@ -88,23 +101,28 @@ export class CupGame {
     }
   }
 
+  getCupArray(startingCup?: Cup): Cup[] {
+    if (startingCup === undefined) startingCup = this.currentCup;
+    return this.cups.toArray(startingCup);
+  }
+
   getCupLabels(): string {
-    const indexOfCup1 = this.cups.indexOf(1);
-    return [...this.cups, ...this.cups]
-      .slice(indexOfCup1 + 1, indexOfCup1 + this.cups.length)
-      .join("");
+    return this.getCupArray(1).slice(1).join("");
+  }
+
+  getProductOfCupsWithStars(): number {
+    const cup1Item = this.cups.get(1);
+    return cup1Item.next.value * cup1Item.next.next.value;
   }
 }
 
 export function solution1() {
   const game = new CupGame("942387615");
-  // game.playUntilRound(100);
+  game.playUntilRound(100);
   return game.getCupLabels();
 }
 export function solution2() {
   const game = new CupGame("942387615", true);
-  game.playUntilRound(20);
-  console.log(game.cups.slice(0, 100));
-
-  // return game.getCupLabels();
+  game.playUntilRound(10000000);
+  return game.getProductOfCupsWithStars();
 }
