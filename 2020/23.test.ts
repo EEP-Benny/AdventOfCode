@@ -30,3 +30,9 @@ test("CupGame.getCupLabels", () => {
   game.playUntilRound(100);
   expect(game.getCupLabels()).toEqual("67384529");
 });
+
+test("CupGame.expandToAMillion", () => {
+  const game = new CupGame("389125467", true);
+  expect(game.cups[999999]).toEqual(1000000);
+  expect(game.cups).toHaveLength(1000000);
+});

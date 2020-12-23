@@ -6,24 +6,41 @@ export class CupGame {
   highestCup: Cup;
   roundCounter = 0;
 
-  constructor(cupsAsString: string) {
+  constructor(cupsAsString: string, expandToAMillion = false) {
     this.cups = cupsAsString.split("").map((x) => +x);
     this.lowestCup = Math.min(...this.cups);
     this.highestCup = Math.max(...this.cups);
+    if (expandToAMillion) {
+      this.cups = Array(1000000)
+        .fill(0)
+        .map((_, i) => this.cups[i] ?? i + 1);
+      this.highestCup = 1000000;
+    }
   }
 
   playSingleRound() {
-    const pickedUpCups = this.cups.splice(1, 3);
     let destinationCup = this.cups[0];
     let destinationCupIndex = -1;
+    // search for a cup that isn't picked up (cups 1-3 are picked up)
     while (destinationCupIndex === -1) {
       destinationCup--;
       if (destinationCup < this.lowestCup) destinationCup = this.highestCup;
-      destinationCupIndex = this.cups.indexOf(destinationCup);
+      destinationCupIndex = this.cups.indexOf(destinationCup, 4);
     }
-    this.cups.splice(destinationCupIndex + 1, 0, ...pickedUpCups);
-    const currentCup = this.cups.shift();
-    this.cups.push(currentCup);
+
+    this.cups = this.cups.map((_, i) => {
+      if (i <= destinationCupIndex - 4) {
+        return this.cups[i + 4];
+      }
+      if (i <= destinationCupIndex - 1) {
+        return this.cups[i + 4 - destinationCupIndex];
+      }
+      if (i <= this.cups.length - 2) {
+        return this.cups[i + 1];
+      } else {
+        return this.cups[0];
+      }
+    });
     this.roundCounter++;
   }
 
@@ -45,4 +62,9 @@ export function solution1() {
   const game = new CupGame("942387615");
   game.playUntilRound(100);
   return game.getCupLabels();
+}
+export function solution2() {
+  const game = new CupGame("942387615", true);
+  game.playUntilRound(1000);
+  // return game.getCupLabels();
 }
