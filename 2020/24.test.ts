@@ -46,3 +46,24 @@ test("HexagonalFloor", () => {
   floor.executeInstructions(largerExample);
   expect(floor.countBlackTiles()).toEqual(10);
 });
+
+test("Hexagonal game of life", () => {
+  const floor = new HexagonalFloor();
+  floor.executeInstructions(largerExample);
+  expect(floor.countBlackTiles()).toEqual(10);
+  floor.simulateOneDay();
+  expect(floor.currentDay).toEqual(1);
+  expect(floor.countBlackTiles()).toEqual(15);
+  floor.simulateUntilDay(2);
+  expect(floor.countBlackTiles()).toEqual(12);
+  floor.simulateUntilDay(3);
+  expect(floor.countBlackTiles()).toEqual(25);
+  floor.simulateUntilDay(4);
+  expect(floor.countBlackTiles()).toEqual(14);
+  floor.simulateUntilDay(5);
+  expect(floor.countBlackTiles()).toEqual(23);
+  floor.simulateUntilDay(10);
+  expect(floor.countBlackTiles()).toEqual(37);
+  floor.simulateUntilDay(100);
+  expect(floor.countBlackTiles()).toEqual(2208);
+});
