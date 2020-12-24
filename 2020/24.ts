@@ -11,6 +11,10 @@ export enum Direction {
 }
 
 const coordinateToString = ([x, y]: Coordinate) => `${x}|${y}`;
+const stringToCoordinate = (str: string): Coordinate => [
+  +str.split("|")[0],
+  +str.split("|")[1],
+];
 
 export function moveCoordinate(
   [x, y]: Coordinate,
@@ -56,22 +60,33 @@ export function parseDirections(str: string): Direction[] {
 }
 
 export class HexagonalFloor {
-  tileIsBlackMap = new Map<string, boolean>();
+  coordinatesOfBlackTiles = new Set<string>();
+  currentDay = 0;
 
   flipTile(coordinate: Coordinate) {
     const stringCoordinate = coordinateToString(coordinate);
-    this.tileIsBlackMap.set(
-      stringCoordinate,
-      !this.tileIsBlackMap.get(stringCoordinate)
-    );
+    if (this.coordinatesOfBlackTiles.has(stringCoordinate)) {
+      this.coordinatesOfBlackTiles.delete(stringCoordinate);
+    } else {
+      this.coordinatesOfBlackTiles.add(stringCoordinate);
+    }
   }
 
+  //   countOfBlackNeighbors(coordinate: Coordinate) {
+  //     let count = 0;
+  //     for (const direction of Object.values(Direction)) {
+  //       if (
+  //         this.coordinatesOfBlackTiles.has(
+  //           coordinateToString(moveCoordinate(coordinate, direction))
+  //         )
+  //       ) {
+  //         count++;
+  //       }
+  //     }
+  //   }
+
   countBlackTiles(): number {
-    let count = 0;
-    this.tileIsBlackMap.forEach((isBlack) => {
-      if (isBlack) count++;
-    });
-    return count;
+    return this.coordinatesOfBlackTiles.size;
   }
 
   executeInstructions(instructions: string[]) {
@@ -79,9 +94,67 @@ export class HexagonalFloor {
       this.flipTile(getCoordinateFromDirections(parseDirections(instruction)));
     }
   }
+
+  simulateOneDay() {
+    const oldFloor = this.coordinatesOfBlackTiles;
+    this.coordinatesOfBlackTiles = new Set();
+
+    const surroundingTilesToConsider = new Set<string>();
+    oldFloor.forEach((stringCoordinateOfBlackTile) => {
+      const coordinateOfBlackTile = stringToCoordinate(
+        stringCoordinateOfBlackTile
+      );
+
+      let countOfBlackNeighbors = 0;
+      for (const direction of Object.values(Direction)) {
+        const stringCoordinate = coordinateToString(
+          moveCoordinate(coordinateOfBlackTile, direction)
+        );
+        if (oldFloor.has(stringCoordinate)) {
+          countOfBlackNeighbors++;
+        } else {
+          surroundingTilesToConsider.add(stringCoordinate);
+        }
+      }
+
+      if (countOfBlackNeighbors === 1 || countOfBlackNeighbors === 2) {
+        // this tile remains black
+        this.coordinatesOfBlackTiles.add(stringCoordinateOfBlackTile);
+      }
+    });
+    surroundingTilesToConsider.forEach((stringCoordinateOfWhiteTile) => {
+      const coordinateOfWhiteTile = stringToCoordinate(
+        stringCoordinateOfWhiteTile
+      );
+      let countOfBlackNeighbors = 0;
+      for (const direction of Object.values(Direction)) {
+        const stringCoordinate = coordinateToString(
+          moveCoordinate(coordinateOfWhiteTile, direction)
+        );
+        if (oldFloor.has(stringCoordinate)) {
+          countOfBlackNeighbors++;
+        }
+      }
+      if (countOfBlackNeighbors === 2) {
+        // this tile is flipped to black
+        this.coordinatesOfBlackTiles.add(stringCoordinateOfWhiteTile);
+      }
+    });
+
+    this.currentDay++;
+  }
+
+  simulateUntilDay(desiredDay: number) {
+    if (this.currentDay > desiredDay) {
+      throw "I can't travel back in time";
+    }
+    while (this.currentDay < desiredDay) {
+      this.simulateOneDay();
+    }
+  }
 }
 
-export function solution1() {
+function getFloor() {
   const instructions = getInputArray({
     day: 24,
     year: 2020,
@@ -89,5 +162,15 @@ export function solution1() {
   });
   const floor = new HexagonalFloor();
   floor.executeInstructions(instructions);
+  return floor;
+}
+
+export function solution1() {
+  const floor = getFloor();
+  return floor.countBlackTiles();
+}
+export function solution2() {
+  const floor = getFloor();
+  floor.simulateUntilDay(100);
   return floor.countBlackTiles();
 }
