@@ -12,6 +12,8 @@ func main() {
 	input := utils.LoadInputSlice(2021, 2, "\n")
 	finalHorizontalPosition, finalDepth := processInstructions(input)
 	fmt.Println("Solution 1:", finalHorizontalPosition*finalDepth)
+	finalHorizontalPosition2, finalDepth2 := processInstructionsWithAim(input)
+	fmt.Println("Solution 2:", finalHorizontalPosition2*finalDepth2)
 }
 
 func splitInstruction(instruction string) (string, int) {
@@ -40,11 +42,22 @@ func translateInstruction(instruction string) (horizontalPosition, depth int) {
 }
 
 func processInstructions(instructions []string) (finalHorizontalPosition, finalDepth int) {
-	finalHorizontalPosition, finalDepth = 0, 0
+	currentHorizontalPosition, currentDepth := 0, 0
 	for _, instruction := range instructions {
 		horizonalPosition, depth := translateInstruction(instruction)
-		finalHorizontalPosition += horizonalPosition
-		finalDepth += depth
+		currentHorizontalPosition += horizonalPosition
+		currentDepth += depth
 	}
-	return finalHorizontalPosition, finalDepth
+	return currentHorizontalPosition, currentDepth
+}
+
+func processInstructionsWithAim(instructions []string) (finalHorizontalPosition, finalDepth int) {
+	currentAim, currentHorizontalPosition, currentDepth := 0, 0, 0
+	for _, instruction := range instructions {
+		horizonalPosition, depth := translateInstruction(instruction)
+		currentAim += depth
+		currentHorizontalPosition += horizonalPosition
+		currentDepth += horizonalPosition * currentAim
+	}
+	return currentHorizontalPosition, currentDepth
 }

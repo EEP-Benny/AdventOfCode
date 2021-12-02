@@ -93,3 +93,28 @@ func Test_processInstructions(t *testing.T) {
 		})
 	}
 }
+
+func Test_processInstructionsWithAim(t *testing.T) {
+	type args struct {
+		instructions []string
+	}
+	tests := []struct {
+		name                        string
+		args                        args
+		wantFinalHorizontalPosition int
+		wantFinalDepth              int
+	}{
+		{"exampleInput", args{exampleInput}, 15, 60},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFinalHorizontalPosition, gotFinalDepth := processInstructionsWithAim(tt.args.instructions)
+			if gotFinalHorizontalPosition != tt.wantFinalHorizontalPosition {
+				t.Errorf("processInstructionsWithAim() gotFinalHorizontalPosition = %v, want %v", gotFinalHorizontalPosition, tt.wantFinalHorizontalPosition)
+			}
+			if gotFinalDepth != tt.wantFinalDepth {
+				t.Errorf("processInstructionsWithAim() gotFinalDepth = %v, want %v", gotFinalDepth, tt.wantFinalDepth)
+			}
+		})
+	}
+}
