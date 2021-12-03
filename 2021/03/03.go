@@ -11,9 +11,14 @@ import (
 func main() {
 	input := utils.LoadInputSlice(2021, 3, "\n")
 	inputBitFields := convertToBitFields(input)
-	fmt.Println("Solution 1:", convertBitsToInt(findMostCommonBits(inputBitFields))*convertBitsToInt(findLeastCommonBits(inputBitFields)))
-	// finalHorizontalPosition2, finalDepth2 := processInstructionsWithAim(input)
-	// fmt.Println("Solution 2:", finalHorizontalPosition2*finalDepth2)
+
+	gammaRate := convertBitsToInt(findMostCommonBits(inputBitFields))
+	epsilonRate := convertBitsToInt(findLeastCommonBits(inputBitFields))
+	fmt.Println("Solution 1:", gammaRate*epsilonRate)
+
+	oxygenGeneratorRating := convertBitsToInt(filterDownToOneNumber(inputBitFields, findMostCommonBits))
+	co2ScrubberRating := convertBitsToInt(filterDownToOneNumber(inputBitFields, findLeastCommonBits))
+	fmt.Println("Solution 2:", oxygenGeneratorRating*co2ScrubberRating)
 }
 
 func convertToBitField(inputAsString string) []int {
@@ -40,11 +45,11 @@ func sumBits(inputBitFields [][]int) []int {
 }
 
 func findMostCommonBits(inputBitFields [][]int) []int {
-	threshold := len(inputBitFields) / 2
+	threshold := (len(inputBitFields) + 1) / 2
 	summedBits := sumBits(inputBitFields)
 	mostCommonBits := make([]int, len(summedBits))
 	for i, summedBit := range summedBits {
-		if summedBit > threshold {
+		if summedBit >= threshold {
 			mostCommonBits[i] = 1
 		}
 	}
@@ -52,7 +57,7 @@ func findMostCommonBits(inputBitFields [][]int) []int {
 }
 
 func findLeastCommonBits(inputBitFields [][]int) []int {
-	threshold := len(inputBitFields) / 2
+	threshold := (len(inputBitFields) + 1) / 2
 	summedBits := sumBits(inputBitFields)
 	leastCommonBits := make([]int, len(summedBits))
 	for i, summedBit := range summedBits {
@@ -73,4 +78,19 @@ func convertBitsToInt(inputBits []int) int {
 		panic(err)
 	}
 	return int(integer)
+}
+
+func filterDownToOneNumber(inputBitFields [][]int, findSurvivingBit func([][]int) []int) []int {
+	currentNumbers := inputBitFields
+	for i := 0; len(currentNumbers) > 1; i++ {
+		survivingBit := findSurvivingBit(currentNumbers)[i]
+		var survivingNumbers [][]int
+		for _, currentNumber := range currentNumbers {
+			if currentNumber[i] == survivingBit {
+				survivingNumbers = append(survivingNumbers, currentNumber)
+			}
+		}
+		currentNumbers = survivingNumbers
+	}
+	return currentNumbers[0]
 }

@@ -72,6 +72,7 @@ func Test_findMostCommonBits(t *testing.T) {
 		want []int
 	}{
 		{"example input", args{convertToBitFields(exampleInput)}, []int{1, 0, 1, 1, 0}},
+		{"equally common", args{[][]int{{0}, {1}}}, []int{1}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -92,6 +93,7 @@ func Test_findLeastCommonBits(t *testing.T) {
 		want []int
 	}{
 		{"example input", args{convertToBitFields(exampleInput)}, []int{0, 1, 0, 0, 1}},
+		{"equally common", args{[][]int{{0}, {1}}}, []int{0}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -118,6 +120,28 @@ func Test_convertBitsToInt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := convertBitsToInt(tt.args.inputBits); got != tt.want {
 				t.Errorf("convertBitsToInt() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_filterDownToOneNumber(t *testing.T) {
+	type args struct {
+		inputBitFields   [][]int
+		findSurvivingBit func([][]int) []int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []int
+	}{
+		{"oxygen generator example", args{convertToBitFields(exampleInput), findMostCommonBits}, []int{1, 0, 1, 1, 1}},
+		{"CO2 scrubber example", args{convertToBitFields(exampleInput), findLeastCommonBits}, []int{0, 1, 0, 1, 0}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := filterDownToOneNumber(tt.args.inputBitFields, tt.args.findSurvivingBit); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("filterDownToOneNumber() = %v, want %v", got, tt.want)
 			}
 		})
 	}
