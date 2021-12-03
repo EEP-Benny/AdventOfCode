@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -25,13 +24,5 @@ func LoadInputSlice(year, day int, separator string) []string {
 
 func LoadInputSliceInt(year, day int) []int {
 	inputLines := LoadInputSlice(year, day, "\n")
-	var numericLines []int
-	for _, line := range inputLines {
-		if numericLine, err := strconv.Atoi(line); err != nil {
-			panic(err)
-		} else {
-			numericLines = append(numericLines, numericLine)
-		}
-	}
-	return numericLines
+	return IntSlice(inputLines)
 }
