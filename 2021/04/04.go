@@ -16,7 +16,7 @@ func main() {
 	input := utils.LoadInput(2021, 4)
 	numbers, boards := processInput(input)
 	fmt.Println("Solution 1:", runBoardsUntilOneWins(numbers, boards))
-	// fmt.Println("Solution 2:", TODO)
+	fmt.Println("Solution 2:", runBoardsUntilLastOneWins(numbers, boards))
 }
 
 func makeBoard(boardString string) Board {
@@ -111,6 +111,36 @@ func runBoardsUntilOneWins(numbers []int, boards []Board) int {
 				// fmt.Println("Winning number: ", number)
 				// fmt.Println("Winning board: ", i, boards[i])
 				return getWinningScore(boards[i], number)
+			}
+		}
+	}
+	return -1
+}
+
+func runBoardsUntilLastOneWins(numbers []int, boards []Board) int {
+	boardHasAlreadyWon := make([]bool, len(boards))
+
+	allBoardsHaveWon := func() bool {
+		for i := 0; i < len(boards); i++ {
+			if !boardHasAlreadyWon[i] {
+				return false
+			}
+		}
+		return true
+	}
+
+	for _, number := range numbers {
+		for i := 0; i < len(boards); i++ {
+			if boardHasAlreadyWon[i] {
+				continue
+			}
+			boards[i] = markNumberInBoard(boards[i], number)
+			if hasBoardWon(boards[i]) {
+				boardHasAlreadyWon[i] = true
+				if allBoardsHaveWon() {
+					// this was the last one
+					return getWinningScore(boards[i], number)
+				}
 			}
 		}
 	}

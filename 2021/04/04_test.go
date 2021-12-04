@@ -25,6 +25,8 @@ var exampleInput = `7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8
 22 11 13  6  5
  2  0 12  3  7`
 
+var exampleNumbers, exampleBoards = processInput(exampleInput)
+
 func Test_processInput(t *testing.T) {
 	type args struct {
 		inputAsString string
@@ -137,7 +139,6 @@ func Test_getWinningScore(t *testing.T) {
 }
 
 func Test_runBoardsUntilOneWins(t *testing.T) {
-	numbers, boards := processInput(exampleInput)
 	type args struct {
 		numbers []int
 		boards  []Board
@@ -147,12 +148,33 @@ func Test_runBoardsUntilOneWins(t *testing.T) {
 		args args
 		want int
 	}{
-		{"example input", args{numbers, boards}, 4512},
+		{"example input", args{exampleNumbers, exampleBoards}, 4512},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := runBoardsUntilOneWins(tt.args.numbers, tt.args.boards); got != tt.want {
 				t.Errorf("runBoardsUntilOneWins() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_runBoardsUntilLastOneWins(t *testing.T) {
+	type args struct {
+		numbers []int
+		boards  []Board
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"example input", args{exampleNumbers, exampleBoards}, 1924},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := runBoardsUntilLastOneWins(tt.args.numbers, tt.args.boards); got != tt.want {
+				t.Errorf("runBoardsUntilLastOneWins() = %v, want %v", got, tt.want)
 			}
 		})
 	}
