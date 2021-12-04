@@ -13,12 +13,12 @@ func LoadInput(year, day int) string {
 		panic(err)
 	}
 	fileContentAsString := string(fileContentAsBytes)
-	return fileContentAsString
+	return strings.TrimSpace(fileContentAsString)
 }
 
 func LoadInputSlice(year, day int, separator string) []string {
 	inputAsString := LoadInput(year, day)
-	slicedInput := strings.Split(strings.TrimSpace(inputAsString), separator)
+	slicedInput := strings.Split(inputAsString, separator)
 	return slicedInput
 }
 
