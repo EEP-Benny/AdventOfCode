@@ -43,48 +43,28 @@ func drawLinesInDiagram(lines []Line, diagramSize int, considerDiagonals bool) D
 	}
 
 	for _, line := range lines {
-		if line.x1 == line.x2 {
-			x := line.x1
-			if line.y1 < line.y2 {
-				for y := line.y1; y <= line.y2; y++ {
-					diagram[y][x] += 1
-				}
-			} else {
-				for y := line.y2; y <= line.y1; y++ {
-					diagram[y][x] += 1
-				}
-			}
-		} else if line.y1 == line.y2 {
-			y := line.y1
-			if line.x1 < line.x2 {
-				for x := line.x1; x <= line.x2; x++ {
-					diagram[y][x] += 1
-				}
-			} else {
-				for x := line.x2; x <= line.x1; x++ {
-					diagram[y][x] += 1
-				}
-			}
-		} else if considerDiagonals {
-			var length, xStep, yStep int
-			if line.x1 < line.x2 {
-				length = line.x2 - line.x1
-				xStep = 1
-			} else {
-				length = line.x1 - line.x2
-				xStep = -1
-			}
-			if line.y1 < line.y2 {
-				yStep = 1
-			} else {
-				yStep = -1
-			}
-			for step := 0; step <= length; step++ {
-				diagram[line.y1+step*yStep][line.x1+step*xStep] += 1
-			}
+		var length, xStep, yStep int
+		if line.y1 < line.y2 {
+			length = line.y2 - line.y1
+			yStep = 1
+		} else if line.y1 > line.y2 {
+			length = line.y1 - line.y2
+			yStep = -1
+		}
+		if line.x1 < line.x2 {
+			length = line.x2 - line.x1
+			xStep = 1
+		} else if line.x1 > line.x2 {
+			length = line.x1 - line.x2
+			xStep = -1
+		}
+		if !considerDiagonals && xStep != 0 && yStep != 0 {
+			continue
+		}
+		for step := 0; step <= length; step++ {
+			diagram[line.y1+step*yStep][line.x1+step*xStep] += 1
 		}
 	}
-
 	return diagram
 }
 
