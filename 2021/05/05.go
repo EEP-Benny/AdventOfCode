@@ -14,9 +14,10 @@ type Diagram [][]int
 
 func main() {
 	input := utils.LoadInputSlice(2021, 5, "\n")
-	diagram := drawLinesInDiagram(processInput(input), 1000)
-	fmt.Println("Solution 1:", countOverlappingPoints(diagram))
-	// fmt.Println("Solution 2:", 0)
+	diagram1 := drawLinesInDiagram(processInput(input), 1000, false)
+	fmt.Println("Solution 1:", countOverlappingPoints(diagram1))
+	diagram2 := drawLinesInDiagram(processInput(input), 1000, true)
+	fmt.Println("Solution 2:", countOverlappingPoints(diagram2))
 }
 
 var lineRegex, _ = regexp.Compile(`(\d+),(\d+) -> (\d+),(\d+)`)
@@ -35,7 +36,7 @@ func processInput(inputAsStrings []string) []Line {
 	return lines
 }
 
-func drawLinesInDiagram(lines []Line, diagramSize int) Diagram {
+func drawLinesInDiagram(lines []Line, diagramSize int, considerDiagonals bool) Diagram {
 	diagram := make(Diagram, diagramSize)
 	for i := 0; i < diagramSize; i++ {
 		diagram[i] = make([]int, diagramSize)
@@ -63,6 +64,23 @@ func drawLinesInDiagram(lines []Line, diagramSize int) Diagram {
 				for x := line.x2; x <= line.x1; x++ {
 					diagram[y][x] += 1
 				}
+			}
+		} else if considerDiagonals {
+			var length, xStep, yStep int
+			if line.x1 < line.x2 {
+				length = line.x2 - line.x1
+				xStep = 1
+			} else {
+				length = line.x1 - line.x2
+				xStep = -1
+			}
+			if line.y1 < line.y2 {
+				yStep = 1
+			} else {
+				yStep = -1
+			}
+			for step := 0; step <= length; step++ {
+				diagram[line.y1+step*yStep][line.x1+step*xStep] += 1
 			}
 		}
 	}

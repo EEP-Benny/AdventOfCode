@@ -72,15 +72,16 @@ func Test_processInput(t *testing.T) {
 
 func Test_drawLinesInDiagram(t *testing.T) {
 	type args struct {
-		lines       []Line
-		diagramSize int
+		lines             []Line
+		diagramSize       int
+		considerDiagonals bool
 	}
 	tests := []struct {
 		name string
 		args args
 		want Diagram
 	}{
-		{"exampleInput", args{processInput(exampleInput), 10}, [][]int{
+		{"exampleInput without diagonals", args{processInput(exampleInput), 10, false}, [][]int{
 			{0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
 			{0, 0, 1, 0, 0, 0, 0, 1, 0, 0},
 			{0, 0, 1, 0, 0, 0, 0, 1, 0, 0},
@@ -92,10 +93,22 @@ func Test_drawLinesInDiagram(t *testing.T) {
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			{2, 2, 2, 1, 1, 1, 0, 0, 0, 0},
 		}},
+		{"exampleInput with diagonals", args{processInput(exampleInput), 10, true}, [][]int{
+			{1, 0, 1, 0, 0, 0, 0, 1, 1, 0},
+			{0, 1, 1, 1, 0, 0, 0, 2, 0, 0},
+			{0, 0, 2, 0, 1, 0, 1, 1, 1, 0},
+			{0, 0, 0, 1, 0, 2, 0, 2, 0, 0},
+			{0, 1, 1, 2, 3, 1, 3, 2, 1, 1},
+			{0, 0, 0, 1, 0, 2, 0, 0, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0, 0},
+			{1, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+			{2, 2, 2, 1, 1, 1, 0, 0, 0, 0},
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := drawLinesInDiagram(tt.args.lines, tt.args.diagramSize); !reflect.DeepEqual(got, tt.want) {
+			if got := drawLinesInDiagram(tt.args.lines, tt.args.diagramSize, tt.args.considerDiagonals); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("drawLinesInDiagram() = %v, want %v", got, tt.want)
 			}
 		})
@@ -111,7 +124,8 @@ func Test_countOverlappingPoints(t *testing.T) {
 		args args
 		want int
 	}{
-		{"exampleInput", args{drawLinesInDiagram(processInput(exampleInput), 10)}, 5},
+		{"exampleInput without diagonals", args{drawLinesInDiagram(processInput(exampleInput), 10, false)}, 5},
+		{"exampleInput with diagonals", args{drawLinesInDiagram(processInput(exampleInput), 10, true)}, 12},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
