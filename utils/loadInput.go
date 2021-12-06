@@ -22,7 +22,7 @@ func LoadInputSlice(year, day int, separator string) []string {
 	return slicedInput
 }
 
-func LoadInputSliceInt(year, day int) []int {
-	inputLines := LoadInputSlice(year, day, "\n")
+func LoadInputSliceInt(year, day int, separator string) []int {
+	inputLines := LoadInputSlice(year, day, separator)
 	return IntSlice(inputLines)
 }

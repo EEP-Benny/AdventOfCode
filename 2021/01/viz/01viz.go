@@ -14,7 +14,7 @@ func main() {
 	}
 	defer f.Close()
 
-	input := utils.LoadInputSliceInt(2021, 1)
+	input := utils.LoadInputSliceInt(2021, 1, "\n")
 
 	width := xScale(len(input))
 	height := yScale(max(input) + 500)

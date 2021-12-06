@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	input := utils.LoadInputSliceInt(2021, 1)
+	input := utils.LoadInputSliceInt(2021, 1, "\n")
 	fmt.Println("Solution 1:", countDepthIncreases(input))
 	fmt.Println("Solution 2:", countSmoothedDepthIncreases(input))
 }
