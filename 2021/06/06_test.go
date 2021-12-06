@@ -46,3 +46,25 @@ func Test_simulateManyDays(t *testing.T) {
 		})
 	}
 }
+
+func Test_getNumberOfFishAfterDays(t *testing.T) {
+	type args struct {
+		internalTimers []int
+		numDays        int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"example input after 18 days", args{[]int{3, 4, 3, 1, 2}, 18}, 26},
+		{"example input after 256 days", args{[]int{3, 4, 3, 1, 2}, 256}, 26984457539},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getNumberOfFishAfterDays(tt.args.internalTimers, tt.args.numDays); got != tt.want {
+				t.Errorf("getNumberOfFishAfterDays() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
