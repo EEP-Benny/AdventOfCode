@@ -65,3 +65,75 @@ func Test_countEasyGuessableDigits(t *testing.T) {
 		})
 	}
 }
+
+func Test_getDigit(t *testing.T) {
+	type args struct {
+		wireState WireState
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"0", args{getWireStateFromString("abcefg")}, 0},
+		{"1", args{getWireStateFromString("cf")}, 1},
+		{"2", args{getWireStateFromString("acdeg")}, 2},
+		{"3", args{getWireStateFromString("acdfg")}, 3},
+		{"4", args{getWireStateFromString("bcdf")}, 4},
+		{"5", args{getWireStateFromString("abdfg")}, 5},
+		{"6", args{getWireStateFromString("abdefg")}, 6},
+		{"7", args{getWireStateFromString("acf")}, 7},
+		{"8", args{getWireStateFromString("abcdefg")}, 8},
+		{"9", args{getWireStateFromString("abcdfg")}, 9},
+		{"invalid 1", args{getWireStateFromString("")}, -1},
+		{"invalid 2", args{getWireStateFromString("ab")}, -1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getDigit(tt.args.wireState); got != tt.want {
+				t.Errorf("getDigit() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_findOutputNumber(t *testing.T) {
+	type args struct {
+		inputsAndOutputs InputsAndOutputs
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"exampleInput short", args{processInput(exampleInputShort)[0]}, 5353},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := findOutputNumber(tt.args.inputsAndOutputs); got != tt.want {
+				t.Errorf("findOutputNumber() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_sumAllOutputNumbers(t *testing.T) {
+	type args struct {
+		sliceOfInputsAndOutputs []InputsAndOutputs
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"exampleInput short", args{processInput(exampleInputShort)}, 5353},
+		{"exampleInput easy", args{processInput(exampleInputEasy)}, 61229},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := sumAllOutputNumbers(tt.args.sliceOfInputsAndOutputs); got != tt.want {
+				t.Errorf("sumAllOutputNumbers() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
