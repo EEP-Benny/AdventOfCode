@@ -84,3 +84,48 @@ func Test_getSumOfRiskLevelsOfLowPoints(t *testing.T) {
 		})
 	}
 }
+
+func Test_getSizeOfBasinAtLowPoint(t *testing.T) {
+	type args struct {
+		heightMap HeightMap
+		y         int
+		x         int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"top left", args{processInput(exampleInput), 0, 1}, 3},
+		{"top right", args{processInput(exampleInput), 0, 9}, 9},
+		{"middle", args{processInput(exampleInput), 2, 2}, 14},
+		{"bottom right", args{processInput(exampleInput), 4, 6}, 9},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getSizeOfBasinAtLowPoint(tt.args.heightMap, tt.args.y, tt.args.x); got != tt.want {
+				t.Errorf("getSizeOfBasinAtLowPoint() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getProductOfThreeLargestBasins(t *testing.T) {
+	type args struct {
+		heightMap HeightMap
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"exampleInput", args{processInput(exampleInput)}, 1134},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getProductOfThreeLargestBasins(tt.args.heightMap); got != tt.want {
+				t.Errorf("getProductOfThreeLargestBasins() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
