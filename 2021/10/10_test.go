@@ -68,3 +68,44 @@ func Test_getSyntaxErrorScore(t *testing.T) {
 		})
 	}
 }
+
+func Test_getCompletionScore(t *testing.T) {
+	type args struct {
+		openChunks []rune
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"}}]])})]", args{[]rune{'}', '}', ']', ']', ')', '}', ')', ']'}}, 288957},
+		{"])}>", args{[]rune{']', ')', '}', '>'}}, 294},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getCompletionScore(tt.args.openChunks); got != tt.want {
+				t.Errorf("getCompletionScore() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_findMiddleCompletionScore(t *testing.T) {
+	type args struct {
+		lines []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"example input", args{exampleInput}, 288957},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := findMiddleCompletionScore(tt.args.lines); got != tt.want {
+				t.Errorf("findMiddleCompletionScore() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

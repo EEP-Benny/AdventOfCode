@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/EEP-Benny/AdventOfCode/utils"
 )
@@ -20,20 +21,27 @@ var illegalCharacterScore = map[rune]int{
 	'>': 25137,
 }
 
+var completionScore = map[rune]int{
+	')': 1,
+	']': 2,
+	'}': 3,
+	'>': 4,
+}
+
 func main() {
 	input := utils.LoadInputSlice(2021, 10, "\n")
 	fmt.Println("Solution 1:", getSyntaxErrorScore(input))
-	// fmt.Println("Solution 2:", ???)
+	fmt.Println("Solution 2:", findMiddleCompletionScore(input))
 }
 
 func validateLine(line string) (isValid bool, illegalChars []rune, openChunks []rune) {
 	for _, char := range line {
-		if _, exists := matchingCharacters[char]; exists {
+		if matchingChar, exists := matchingCharacters[char]; exists {
 			// opening chunk
-			openChunks = append(openChunks, char)
-		} else if char == matchingCharacters[openChunks[len(openChunks)-1]] {
+			openChunks = append([]rune{matchingChar}, openChunks...)
+		} else if char == openChunks[0] {
 			// closing chunk
-			openChunks = openChunks[:len(openChunks)-1]
+			openChunks = openChunks[1:]
 		} else {
 			// invalid closing character
 			return false, []rune{char}, []rune{}
@@ -51,4 +59,25 @@ func getSyntaxErrorScore(lines []string) int {
 		}
 	}
 	return score
+}
+
+func getCompletionScore(openChunks []rune) int {
+	score := 0
+	for _, closingChar := range openChunks {
+		score *= 5
+		score += completionScore[closingChar]
+	}
+	return score
+}
+
+func findMiddleCompletionScore(lines []string) int {
+	completionScores := []int{}
+	for _, line := range lines {
+		_, _, openChunks := validateLine(line)
+		if len(openChunks) > 0 {
+			completionScores = append(completionScores, getCompletionScore(openChunks))
+		}
+	}
+	sort.Ints(completionScores)
+	return completionScores[len(completionScores)/2]
 }
