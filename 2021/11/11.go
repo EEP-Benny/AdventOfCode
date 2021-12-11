@@ -10,10 +10,10 @@ import (
 type EnergyLevels [][]int
 
 func main() {
-	input := processInput(utils.LoadInputSlice(2021, 11, "\n"))
-	_, flashCount := simulateSteps(input, 100)
+	input := utils.LoadInputSlice(2021, 11, "\n")
+	_, flashCount := simulateSteps(processInput(input), 100)
 	fmt.Println("Solution 1:", flashCount)
-	// fmt.Println("Solution 2:", ???)
+	fmt.Println("Solution 2:", findFirstSynchronizedFlash(processInput(input)))
 }
 
 func processInput(inputAsStrings []string) EnergyLevels {
@@ -78,4 +78,15 @@ func simulateSteps(energyLevels EnergyLevels, stepCount int) (EnergyLevels, int)
 		totalFlashCount += flashCount
 	}
 	return energyLevels, totalFlashCount
+}
+func findFirstSynchronizedFlash(energyLevels EnergyLevels) int {
+	expectedFlashCount := len(energyLevels) * len(energyLevels[0])
+	for i := 1; true; i++ {
+		newEnergyLevels, flashCount := simulateStep(energyLevels)
+		energyLevels = newEnergyLevels
+		if flashCount == expectedFlashCount {
+			return i
+		}
+	}
+	return 0
 }

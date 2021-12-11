@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var exampleInput = processInput([]string{
+var exampleInput = []string{
 	"5483143223",
 	"2745854711",
 	"5264556173",
@@ -16,8 +16,8 @@ var exampleInput = processInput([]string{
 	"6882881134",
 	"4846848554",
 	"5283751526",
-})
-var exampleInputAfterStep1 = processInput([]string{
+}
+var exampleInputAfterStep1 = []string{
 	"6594254334",
 	"3856965822",
 	"6375667284",
@@ -28,8 +28,8 @@ var exampleInputAfterStep1 = processInput([]string{
 	"7993992245",
 	"5957959665",
 	"6394862637",
-})
-var exampleInputAfterStep2 = processInput([]string{
+}
+var exampleInputAfterStep2 = []string{
 	"8807476555",
 	"5089087054",
 	"8597889608",
@@ -40,8 +40,8 @@ var exampleInputAfterStep2 = processInput([]string{
 	"0000007456",
 	"9000000876",
 	"8700006848",
-})
-var exampleInputAfterStep3 = processInput([]string{
+}
+var exampleInputAfterStep3 = []string{
 	"0050900866",
 	"8500800575",
 	"9900000039",
@@ -52,8 +52,8 @@ var exampleInputAfterStep3 = processInput([]string{
 	"2211130000",
 	"0421125000",
 	"0021119000",
-})
-var exampleInputAfterStep100 = processInput([]string{
+}
+var exampleInputAfterStep100 = []string{
 	"0397666866",
 	"0749766918",
 	"0053976933",
@@ -64,7 +64,7 @@ var exampleInputAfterStep100 = processInput([]string{
 	"9322228966",
 	"7922286866",
 	"6789998766",
-})
+}
 
 func Test_simulateStep(t *testing.T) {
 	type args struct {
@@ -76,9 +76,9 @@ func Test_simulateStep(t *testing.T) {
 		want  EnergyLevels
 		want1 int
 	}{
-		{"exampleInput step 1", args{exampleInput}, exampleInputAfterStep1, 0},
-		{"exampleInput step 2", args{exampleInputAfterStep1}, exampleInputAfterStep2, 35},
-		{"exampleInput step 3", args{exampleInputAfterStep2}, exampleInputAfterStep3, 45},
+		{"exampleInput step 1", args{processInput(exampleInput)}, processInput(exampleInputAfterStep1), 0},
+		{"exampleInput step 2", args{processInput(exampleInputAfterStep1)}, processInput(exampleInputAfterStep2), 35},
+		{"exampleInput step 3", args{processInput(exampleInputAfterStep2)}, processInput(exampleInputAfterStep3), 45},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -104,7 +104,7 @@ func Test_simulateSteps(t *testing.T) {
 		want  EnergyLevels
 		want1 int
 	}{
-		{"exampleInput for 100 steps", args{exampleInput, 100}, exampleInputAfterStep100, 1656},
+		{"exampleInput for 100 steps", args{processInput(exampleInput), 100}, processInput(exampleInputAfterStep100), 1656},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -114,6 +114,26 @@ func Test_simulateSteps(t *testing.T) {
 			}
 			if got1 != tt.want1 {
 				t.Errorf("simulateSteps() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func Test_findFirstSynchronizedFlash(t *testing.T) {
+	type args struct {
+		energyLevels EnergyLevels
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"exampleInput", args{processInput(exampleInput)}, 195},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := findFirstSynchronizedFlash(tt.args.energyLevels); got != tt.want {
+				t.Errorf("findFirstSynchronizedFlash() = %v, want %v", got, tt.want)
 			}
 		})
 	}
