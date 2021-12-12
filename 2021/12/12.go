@@ -2,17 +2,21 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/EEP-Benny/AdventOfCode/utils"
 )
 
 type CaveConnections map[string]map[string]bool
+type Path []string
 
 func main() {
 	input := createCaveConnections(utils.LoadInputSlice(2021, 12, "\n"))
-	fmt.Println("Solution 1:", countPathsToEnd(input))
-	// fmt.Println("Solution 2:", ???)
+	pathsWithoutRevisits := generatePathsThroughCaveSystem(input, 0)
+	fmt.Println("Solution 1:", countPathsToEnd(pathsWithoutRevisits))
+	pathsWithOneRevisit := generatePathsThroughCaveSystem(input, 1)
+	fmt.Println("Solution 2:", countPathsToEnd(pathsWithOneRevisit))
 }
 
 func createCaveConnections(inputAsStrings []string) CaveConnections {
@@ -32,39 +36,43 @@ func createCaveConnections(inputAsStrings []string) CaveConnections {
 	return caveConnections
 }
 
-func pathDoesVisitSmallCavesAtMostOnce(caves []string) bool {
+func countRevisitedSmallCaves(path Path) int {
 	alreadyVisitedSmallCaves := make(map[string]bool)
-	for _, cave := range caves {
+	numberOfRevisitedSmallCaves := 0
+	for _, cave := range path {
 		if _, exists := alreadyVisitedSmallCaves[cave]; exists {
-			return false // same small cave was already visited before
+			numberOfRevisitedSmallCaves++
+			if cave == "start" {
+				return math.MaxInt
+			}
 		}
 		if strings.ToLower(cave) == cave { // small cave
 			alreadyVisitedSmallCaves[cave] = true
 		}
 	}
-	return true
+	return numberOfRevisitedSmallCaves
 }
 
-func pathDoesLeadToEnd(caves []string) bool {
-	return caves[len(caves)-1] == "end"
+func pathDoesLeadToEnd(path Path) bool {
+	return path[len(path)-1] == "end"
 }
 
-func generatePathsThroughCaveSystem(caveSystem CaveConnections) [][]string {
-	allPaths := [][]string{}
-	pathsToExplore := [][]string{{"start"}}
+func generatePathsThroughCaveSystem(caveSystem CaveConnections, maxRevisitsOfSmallCaves int) []Path {
+	allPaths := []Path{}
+	pathsToExplore := []Path{{"start"}}
 	for len(pathsToExplore) > 0 {
 		allPaths = append(allPaths, pathsToExplore...)
-		newPaths := [][]string{}
+		newPaths := []Path{}
 		for _, path := range pathsToExplore {
 			lastCave := path[len(path)-1]
 			if lastCave == "end" {
 				continue
 			}
 			for nextCave := range caveSystem[lastCave] {
-				newPath := make([]string, len(path)+1)
+				newPath := make(Path, len(path)+1)
 				_ = copy(newPath, path)
 				newPath[len(newPath)-1] = nextCave
-				if pathDoesVisitSmallCavesAtMostOnce(newPath) {
+				if countRevisitedSmallCaves(newPath) <= maxRevisitsOfSmallCaves {
 					newPaths = append(newPaths, newPath)
 				}
 			}
@@ -75,9 +83,9 @@ func generatePathsThroughCaveSystem(caveSystem CaveConnections) [][]string {
 	return allPaths
 }
 
-func countPathsToEnd(caveSystem CaveConnections) int {
+func countPathsToEnd(paths []Path) int {
 	pathCount := 0
-	for _, path := range generatePathsThroughCaveSystem(caveSystem) {
+	for _, path := range paths {
 		if pathDoesLeadToEnd(path) {
 			pathCount++
 		}

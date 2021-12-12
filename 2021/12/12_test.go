@@ -72,22 +72,22 @@ func Test_createCaveConnections(t *testing.T) {
 	}
 }
 
-func Test_pathDoesVisitSmallCavesAtMostOnce(t *testing.T) {
+func Test_countRevisitedSmallCaves(t *testing.T) {
 	type args struct {
-		caves []string
+		path Path
 	}
 	tests := []struct {
 		name string
 		args args
-		want bool
+		want int
 	}{
-		{"valid path", args{[]string{"start", "A", "b", "A", "c", "A", "end"}}, true},
-		{"invalid path", args{[]string{"start", "A", "b", "A", "b", "A", "end"}}, false},
+		{"valid path", args{[]string{"start", "A", "b", "A", "c", "A", "end"}}, 0},
+		{"invalid path", args{[]string{"start", "A", "b", "A", "b", "A", "end"}}, 1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := pathDoesVisitSmallCavesAtMostOnce(tt.args.caves); got != tt.want {
-				t.Errorf("pathDoesVisitSmallCavesAtMostOnce() = %v, want %v", got, tt.want)
+			if got := countRevisitedSmallCaves(tt.args.path); got != tt.want {
+				t.Errorf("countRevisitedSmallCaves() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -95,20 +95,23 @@ func Test_pathDoesVisitSmallCavesAtMostOnce(t *testing.T) {
 
 func Test_countPathsToEnd(t *testing.T) {
 	type args struct {
-		caveSystem CaveConnections
+		paths []Path
 	}
 	tests := []struct {
 		name string
 		args args
 		want int
 	}{
-		{"small example input", args{createCaveConnections(exampleInput1)}, 10},
-		{"larger example input", args{createCaveConnections(exampleInput2)}, 19},
-		{"even larger example input", args{createCaveConnections(exampleInput3)}, 226},
+		{"small example input", args{generatePathsThroughCaveSystem(createCaveConnections(exampleInput1), 0)}, 10},
+		{"larger example input", args{generatePathsThroughCaveSystem(createCaveConnections(exampleInput2), 0)}, 19},
+		{"even larger example input", args{generatePathsThroughCaveSystem(createCaveConnections(exampleInput3), 0)}, 226},
+		{"small example input", args{generatePathsThroughCaveSystem(createCaveConnections(exampleInput1), 1)}, 36},
+		{"larger example input", args{generatePathsThroughCaveSystem(createCaveConnections(exampleInput2), 1)}, 103},
+		{"even larger example input", args{generatePathsThroughCaveSystem(createCaveConnections(exampleInput3), 1)}, 3509},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := countPathsToEnd(tt.args.caveSystem); got != tt.want {
+			if got := countPathsToEnd(tt.args.paths); got != tt.want {
 				t.Errorf("countPathsToEnd() = %v, want %v", got, tt.want)
 			}
 		})
