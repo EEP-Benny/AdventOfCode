@@ -2,6 +2,7 @@ package main
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -150,6 +151,35 @@ func Test_executeFold(t *testing.T) {
 	}
 }
 
+func Test_executeFolds(t *testing.T) {
+	type args struct {
+		dotMatrix DotMatrix
+		folds     []Fold
+	}
+	tests := []struct {
+		name string
+		args args
+		want DotMatrix
+	}{
+		{"example input", args{createDotMatrix(exampleDotPositions), exampleFolds}, DotMatrix{
+			{true, true, true, true, true},
+			{true, false, false, false, true},
+			{true, false, false, false, true},
+			{true, false, false, false, true},
+			{true, true, true, true, true},
+			{false, false, false, false, false},
+			{false, false, false, false, false},
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := executeFolds(tt.args.dotMatrix, tt.args.folds); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("executeFolds() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_countDots(t *testing.T) {
 	type args struct {
 		dotMatrix DotMatrix
@@ -165,6 +195,42 @@ func Test_countDots(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := countDots(tt.args.dotMatrix); got != tt.want {
 				t.Errorf("countDots() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_stringifyDotMatrix(t *testing.T) {
+	type args struct {
+		dotMatrix DotMatrix
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{"exampleInput", args{createDotMatrix(exampleDotPositions)}, strings.Join([]string{
+			"...#..#..#.",
+			"....#......",
+			"...........",
+			"#..........",
+			"...#....#.#",
+			"...........",
+			"...........",
+			"...........",
+			"...........",
+			"...........",
+			".#....#.##.",
+			"....#......",
+			"......#...#",
+			"#..........",
+			"#.#........",
+		}, "\n")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := stringifyDotMatrix(tt.args.dotMatrix); got != tt.want {
+				t.Errorf("stringifyDotMatrix() = %v, want %v", got, tt.want)
 			}
 		})
 	}

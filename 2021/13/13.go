@@ -18,7 +18,8 @@ func main() {
 	dotPositions, folds := processInput(utils.LoadInput(2021, 13))
 	dotMatrix := createDotMatrix(dotPositions)
 	fmt.Println("Solution 1:", countDots(executeFold(dotMatrix, folds[0])))
-	// fmt.Println("Solution 2:", ???)
+	fmt.Println("Solution 2:")
+	fmt.Println(stringifyDotMatrix(executeFolds(dotMatrix, folds)))
 }
 
 func processInput(inputString string) (dotPositions [][]int, folds []Fold) {
@@ -100,6 +101,13 @@ func executeFold(dotMatrix DotMatrix, fold Fold) DotMatrix {
 	return newDotMatrix
 }
 
+func executeFolds(dotMatrix DotMatrix, folds []Fold) DotMatrix {
+	for _, fold := range folds {
+		dotMatrix = executeFold(dotMatrix, fold)
+	}
+	return dotMatrix
+}
+
 func countDots(dotMatrix DotMatrix) int {
 	count := 0
 	for _, row := range dotMatrix {
@@ -110,4 +118,20 @@ func countDots(dotMatrix DotMatrix) int {
 		}
 	}
 	return count
+}
+
+func stringifyDotMatrix(dotMatrix DotMatrix) string {
+	stringifiedRows := make([]string, len(dotMatrix))
+	for y, row := range dotMatrix {
+		stringifiedCells := make([]string, len(row))
+		for x, cell := range row {
+			if cell {
+				stringifiedCells[x] = "#"
+			} else {
+				stringifiedCells[x] = "."
+			}
+		}
+		stringifiedRows[y] = strings.Join(stringifiedCells, "")
+	}
+	return strings.Join(stringifiedRows, "\n")
 }
