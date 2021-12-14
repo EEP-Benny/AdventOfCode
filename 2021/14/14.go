@@ -9,12 +9,14 @@ import (
 )
 
 type InsertionRules = map[[2]string]string
+type TemplateInPairs = map[[2]string]int
 
 func main() {
 	template, insertionRules := processInput(utils.LoadInput(2021, 14))
 	templateAfterStep10 := executeInsertionSteps(template, insertionRules, 10)
 	fmt.Println("Solution 1:", differenceBetweenMostCommonAndLeastCommonElement(templateAfterStep10))
-	// fmt.Println("Solution 2:", ???)
+	templatePairsAfterStep40 := executeInsertionStepsOnPairs(templateToTemplatePairs(template), insertionRules, 40)
+	fmt.Println("Solution 2:", differenceBetweenMostCommonAndLeastCommonElementsOnPairs(templatePairsAfterStep40, template))
 }
 
 func processInput(inputString string) (template []string, insertionRules InsertionRules) {
@@ -67,6 +69,51 @@ func differenceBetweenMostCommonAndLeastCommonElement(template []string) int {
 	for _, count := range occurrenceMap {
 		occurrenceCount = append(occurrenceCount, count)
 	}
+	minCount, maxCount := utils.MinMax(occurrenceCount)
+	return maxCount - minCount
+}
+
+func templateToTemplatePairs(template []string) TemplateInPairs {
+	templatePairs := make(TemplateInPairs)
+	for i := 1; i < len(template); i++ {
+		templatePairs[[2]string{template[i-1], template[i]}]++
+	}
+	return templatePairs
+}
+
+func executeInsertionStepOnPairs(templatePairs TemplateInPairs, insertionRules InsertionRules) TemplateInPairs {
+	newTemplatePairs := make(TemplateInPairs)
+	for pair, count := range templatePairs {
+		if insertion, exists := insertionRules[pair]; exists {
+			newTemplatePairs[[2]string{pair[0], insertion}] += count
+			newTemplatePairs[[2]string{insertion, pair[1]}] += count
+		} else {
+			newTemplatePairs[pair] += count
+		}
+	}
+	return newTemplatePairs
+}
+
+func executeInsertionStepsOnPairs(templatePairs TemplateInPairs, insertionRules InsertionRules, stepCount int) TemplateInPairs {
+	for i := 0; i < stepCount; i++ {
+		templatePairs = executeInsertionStepOnPairs(templatePairs, insertionRules)
+	}
+	return templatePairs
+}
+
+func differenceBetweenMostCommonAndLeastCommonElementsOnPairs(templatePairs TemplateInPairs, originalTemplate []string) int {
+	occurrenceMap := make(map[string]int)
+	for elements, count := range templatePairs {
+		occurrenceMap[elements[0]] += count
+	}
+	// don't forget the last character (which didn't change during all the insertions )
+	occurrenceMap[originalTemplate[len(originalTemplate)-1]]++
+
+	occurrenceCount := make([]int, 0, len(occurrenceMap))
+	for _, count := range occurrenceMap {
+		occurrenceCount = append(occurrenceCount, count)
+	}
+
 	minCount, maxCount := utils.MinMax(occurrenceCount)
 	return maxCount - minCount
 }

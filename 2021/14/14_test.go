@@ -155,3 +155,49 @@ func Test_differenceBetweenMostCommonAndLeastCommonElement(t *testing.T) {
 		})
 	}
 }
+
+func Test_templateToTemplatePairs(t *testing.T) {
+	type args struct {
+		template []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want TemplateInPairs
+	}{
+		{"example input", args{strings.Split("NNCB", "")}, map[[2]string]int{
+			{"N", "N"}: 1,
+			{"N", "C"}: 1,
+			{"C", "B"}: 1,
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := templateToTemplatePairs(tt.args.template); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("templateToTemplatePairs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_differenceBetweenMostCommonAndLeastCommonElementsOnPairs(t *testing.T) {
+	type args struct {
+		templatePairs    TemplateInPairs
+		originalTemplate []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"exampleInput after step 10", args{executeInsertionStepsOnPairs(templateToTemplatePairs(exampleTemplate), exampleInsertionRules, 10), exampleTemplate}, 1588},
+		{"exampleInput after step 40", args{executeInsertionStepsOnPairs(templateToTemplatePairs(exampleTemplate), exampleInsertionRules, 40), exampleTemplate}, 2188189693529},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := differenceBetweenMostCommonAndLeastCommonElementsOnPairs(tt.args.templatePairs, tt.args.originalTemplate); got != tt.want {
+				t.Errorf("differenceBetweenMostCommonAndLeastCommonElementsOnPairs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
