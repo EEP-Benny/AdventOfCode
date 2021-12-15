@@ -15,7 +15,8 @@ type Position struct {
 func main() {
 	input := processInput(utils.LoadInputSlice(2021, 15, "\n"))
 	fmt.Println("Solution 1:", findLowestRisk(input))
-	// fmt.Println("Solution 2:", ???)
+	bigInput := tileRiskMap(input, 5, 5)
+	fmt.Println("Solution 2:", findLowestRisk(bigInput))
 }
 
 func processInput(inputAsStrings []string) RiskLevels {
@@ -56,4 +57,20 @@ func findLowestRisk(riskLevels RiskLevels) int {
 	}
 
 	return cumulativeRiskForPosition[len(riskLevels)-1][len(riskLevels[len(riskLevels)-1])-1]
+}
+
+func tileRiskMap(riskMap RiskLevels, xFactor, yFactor int) RiskLevels {
+	ySize := len(riskMap)
+	xSize := len(riskMap[0])
+	newRiskMap := make(RiskLevels, ySize*yFactor)
+	for y := 0; y < ySize*yFactor; y++ {
+		newRiskMap[y] = make([]int, xSize*xFactor)
+		for x := 0; x < xSize*xFactor; x++ {
+			valueFromOriginalMap := riskMap[y%ySize][x%xSize]
+
+			newRiskMap[y][x] = ((valueFromOriginalMap+y/ySize+x/xSize)-1)%9 + 1
+		}
+	}
+
+	return newRiskMap
 }
