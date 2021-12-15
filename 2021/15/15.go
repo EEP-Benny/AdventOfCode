@@ -8,6 +8,9 @@ import (
 )
 
 type RiskLevels [][]int
+type Position struct {
+	x, y int
+}
 
 func main() {
 	input := processInput(utils.LoadInputSlice(2021, 15, "\n"))
@@ -25,22 +28,31 @@ func processInput(inputAsStrings []string) RiskLevels {
 
 func findLowestRisk(riskLevels RiskLevels) int {
 	cumulativeRiskForPosition := make(RiskLevels, len(riskLevels))
-
 	for y := 0; y < len(riskLevels); y++ {
 		cumulativeRiskForPosition[y] = make([]int, len(riskLevels[y]))
-		for x := 0; x < len(riskLevels[y]); x++ {
-			possibleRisks := make([]int, 0, 2)
-			if y > 0 {
-				possibleRisks = append(possibleRisks, cumulativeRiskForPosition[y-1][x])
-			}
-			if x > 0 {
-				possibleRisks = append(possibleRisks, cumulativeRiskForPosition[y][x-1])
-			}
-			if len(possibleRisks) > 0 {
-				minRisk, _ := utils.MinMax(possibleRisks)
-				cumulativeRiskForPosition[y][x] = minRisk + riskLevels[y][x]
+	}
+
+	positionsToExplore := []Position{{0, 0}}
+
+	explore := func(x, y, previousRisk int) {
+		if y >= 0 && y < len(riskLevels) && x >= 0 && x < len(riskLevels[y]) {
+			currentRisk := cumulativeRiskForPosition[y][x]
+			newRisk := previousRisk + riskLevels[y][x]
+			if currentRisk == 0 || currentRisk > newRisk {
+				cumulativeRiskForPosition[y][x] = newRisk
+				positionsToExplore = append(positionsToExplore, Position{x, y})
 			}
 		}
+	}
+
+	for len(positionsToExplore) > 0 {
+		position := positionsToExplore[0]
+		positionsToExplore = positionsToExplore[1:]
+		currentRisk := cumulativeRiskForPosition[position.y][position.x]
+		explore(position.x-1, position.y, currentRisk)
+		explore(position.x, position.y-1, currentRisk)
+		explore(position.x+1, position.y, currentRisk)
+		explore(position.x, position.y+1, currentRisk)
 	}
 
 	return cumulativeRiskForPosition[len(riskLevels)-1][len(riskLevels[len(riskLevels)-1])-1]
