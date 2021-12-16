@@ -19,7 +19,7 @@ func main() {
 	input := utils.LoadInput(2021, 16)
 	packet, _ := parsePacket(hexToBin(input))
 	fmt.Println("Solution 1:", sumPacketVersions(packet))
-	// fmt.Println("Solution 2:", ???)
+	fmt.Println("Solution 2:", evaluatePacket(packet))
 }
 
 func hexToBin(hexString string) (binString string) {
@@ -31,7 +31,7 @@ func hexToBin(hexString string) (binString string) {
 }
 
 func binToInt(binString string) int {
-	parsed, _ := strconv.ParseUint(binString, 2, 32)
+	parsed, _ := strconv.ParseUint(binString, 2, 64)
 	return int(parsed)
 }
 
@@ -85,4 +85,58 @@ func sumPacketVersions(packet Packet) int {
 		sum += sumPacketVersions(subPacket)
 	}
 	return sum
+}
+
+func evaluatePacket(packet Packet) int {
+	switch packet.typeID {
+	case 0: // sum
+		sum := 0
+		for _, subPacket := range packet.subPackets {
+			sum += evaluatePacket(subPacket)
+		}
+		return sum
+	case 1: // product
+		product := 1
+		for _, subPacket := range packet.subPackets {
+			product *= evaluatePacket(subPacket)
+		}
+		return product
+	case 2: // minimum
+		minimum := evaluatePacket(packet.subPackets[0])
+		for _, subPacket := range packet.subPackets[1:] {
+			if packetValue := evaluatePacket(subPacket); packetValue < minimum {
+				minimum = packetValue
+			}
+		}
+		return minimum
+	case 3: // maximum
+		maximum := evaluatePacket(packet.subPackets[0])
+		for _, subPacket := range packet.subPackets[1:] {
+			if packetValue := evaluatePacket(subPacket); packetValue > maximum {
+				maximum = packetValue
+			}
+		}
+		return maximum
+	case 4: // literal
+		return packet.literalValue
+	case 5: // greater than
+		if evaluatePacket(packet.subPackets[0]) > evaluatePacket(packet.subPackets[1]) {
+			return 1
+		} else {
+			return 0
+		}
+	case 6: // less than
+		if evaluatePacket(packet.subPackets[0]) < evaluatePacket(packet.subPackets[1]) {
+			return 1
+		} else {
+			return 0
+		}
+	case 7: // equal
+		if evaluatePacket(packet.subPackets[0]) == evaluatePacket(packet.subPackets[1]) {
+			return 1
+		} else {
+			return 0
+		}
+	}
+	return 0 // should never happen
 }

@@ -88,3 +88,30 @@ func Test_sumPacketVersions(t *testing.T) {
 		})
 	}
 }
+
+func Test_evaluatePacket(t *testing.T) {
+	type args struct {
+		packet Packet
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"example 1: sum", args{dropRestString(parsePacket(hexToBin("C200B40A82")))}, 3},
+		{"example 2: product", args{dropRestString(parsePacket(hexToBin("04005AC33890")))}, 54},
+		{"example 3: minimum", args{dropRestString(parsePacket(hexToBin("880086C3E88112")))}, 7},
+		{"example 4: maximum", args{dropRestString(parsePacket(hexToBin("CE00C43D881120")))}, 9},
+		{"example 5: less than", args{dropRestString(parsePacket(hexToBin("D8005AC2A8F0")))}, 1},
+		{"example 6: greater than", args{dropRestString(parsePacket(hexToBin("F600BC2D8F")))}, 0},
+		{"example 7: equal", args{dropRestString(parsePacket(hexToBin("9C005AC2F8F0")))}, 0},
+		{"example 8: combined", args{dropRestString(parsePacket(hexToBin("9C0141080250320F1802104A08")))}, 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := evaluatePacket(tt.args.packet); got != tt.want {
+				t.Errorf("evaluatePacket() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
