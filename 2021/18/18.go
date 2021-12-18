@@ -15,7 +15,7 @@ type Pair struct {
 func main() {
 	input := parseInput(utils.LoadInputSlice(2021, 18, "\n"))
 	fmt.Println("Solution 1:", getMagnitude(addList(input)))
-	// fmt.Println("Solution 2:", ???)
+	fmt.Println("Solution 2:", findLargestMagnitudeOfSum(input))
 }
 
 func parseInput(inputStrings []string) []Pair {
@@ -127,7 +127,10 @@ func maybeSplit(pair *Pair) bool {
 }
 
 func add(pair1, pair2 Pair) Pair {
-	addedPair := Pair{left: &pair1, right: &pair2}
+	// there is no deep copy in Go
+	copyOfPair1, _ := stringToPair(pairToString(pair1))
+	copyOfPair2, _ := stringToPair(pairToString(pair2))
+	addedPair := Pair{left: &copyOfPair1, right: &copyOfPair2}
 	return reduce(addedPair)
 }
 
@@ -144,4 +147,18 @@ func getMagnitude(pair Pair) int {
 		return 3*getMagnitude(*pair.left) + 2*getMagnitude(*pair.right)
 	}
 	return pair.regularNumber
+}
+
+func findLargestMagnitudeOfSum(pairs []Pair) int {
+	magnitudesOfSums := make([]int, 0)
+	for i1, pair1 := range pairs {
+		for i2, pair2 := range pairs {
+			if i1 != i2 {
+				magnitudesOfSums = append(magnitudesOfSums, getMagnitude(add(pair1, pair2)))
+			}
+		}
+	}
+
+	_, largestMagnitude := utils.MinMax(magnitudesOfSums)
+	return largestMagnitude
 }

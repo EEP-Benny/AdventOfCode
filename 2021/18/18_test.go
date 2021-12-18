@@ -151,3 +151,23 @@ func Test_getMagnitude(t *testing.T) {
 		})
 	}
 }
+
+func Test_findLargestMagnitudeOfSum(t *testing.T) {
+	type args struct {
+		pairs []Pair
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"example input", args{parseInput(exampleInput)}, 3993},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := findLargestMagnitudeOfSum(tt.args.pairs); got != tt.want {
+				t.Errorf("findLargestMagnitudeOfSum() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
