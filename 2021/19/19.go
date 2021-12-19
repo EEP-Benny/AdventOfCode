@@ -15,9 +15,9 @@ var orientations = getAllOrientations()
 
 func main() {
 	input := parseInput(utils.LoadInputSlice(2021, 19, "\n\n"))
-	beaconPositions := assembleBeaconMap(input)
+	beaconPositions, scannerPositions := assembleBeaconMap(input)
 	fmt.Println("Solution 1:", len(beaconPositions))
-	// fmt.Println("Solution 2:", ???)
+	fmt.Println("Solution 2:", findLargestManhattanDistance(scannerPositions))
 }
 
 func parseInput(inputStrings []string) [][]Position {
@@ -70,12 +70,8 @@ func findMatchingBeacons(fixedBeaconPositions []Position, newBeaconPositions []P
 				numberOfMatchingBeaconsForScannerPosition[scannerPosition]++
 			}
 		}
-		if len(numberOfMatchingBeaconsForScannerPosition) > 0 {
-			fmt.Println(numberOfMatchingBeaconsForScannerPosition)
-		}
 		for scannerPosition, matchCount := range numberOfMatchingBeaconsForScannerPosition {
 			if matchCount >= 12*11 {
-				fmt.Println("Found", matchCount, "matches for orientation", scannerOrientation, "with scanner position", scannerPosition)
 				return scannerOrientation, scannerPosition, true
 			}
 		}
@@ -97,28 +93,29 @@ func getBeaconDifferenceMap(beaconPositions []Position, orientation Orientation)
 	return beaconMap
 }
 
-func assembleBeaconMap(beaconPositionsByScanner [][]Position) []Position {
+func assembleBeaconMap(beaconPositionsByScanner [][]Position) (beaconPositions []Position, scannerPositions []Position) {
 	fixedBeaconPositions := beaconPositionsByScanner[0]
 	fixedBeaconPositionsMap := positionsSliceToMap(fixedBeaconPositions)
 	isScannerAlreadyIntegrated := make([]bool, len(beaconPositionsByScanner))
 	isScannerAlreadyIntegrated[0] = true
+	scannerPositions = make([]Position, len(beaconPositionsByScanner))
 	for i := 0; i < len(beaconPositionsByScanner); i++ {
 		for scannerIndex, newBeaconPositions := range beaconPositionsByScanner {
 			if isScannerAlreadyIntegrated[scannerIndex] {
 				continue
 			}
-			if orientation, relativePosition, foundMatch := findMatchingBeacons(fixedBeaconPositions, newBeaconPositions); foundMatch {
+			if scannerOrientation, scannerPosition, foundMatch := findMatchingBeacons(fixedBeaconPositions, newBeaconPositions); foundMatch {
 				for _, newBeaconPosition := range newBeaconPositions {
-					transformedBeaconPosition := orientation.Mul3x1(newBeaconPosition).Add(relativePosition)
+					transformedBeaconPosition := scannerOrientation.Mul3x1(newBeaconPosition).Add(scannerPosition)
 					fixedBeaconPositionsMap[transformedBeaconPosition] = true
 				}
 				fixedBeaconPositions = positionsMapToSlice(fixedBeaconPositionsMap)
 				isScannerAlreadyIntegrated[scannerIndex] = true
-				fmt.Println("Integrated", len(newBeaconPositions), "beacons from scanner", scannerIndex, ", now at", len(fixedBeaconPositions), "beacons total")
+				scannerPositions[scannerIndex] = scannerPosition
 			}
 		}
 	}
-	return fixedBeaconPositions
+	return fixedBeaconPositions, scannerPositions
 }
 
 func positionsSliceToMap(positionsSlice []Position) map[Position]bool {
@@ -134,4 +131,18 @@ func positionsMapToSlice(positionsMap map[Position]bool) []Position {
 		positionsSlice = append(positionsSlice, position)
 	}
 	return positionsSlice
+}
+
+func findLargestManhattanDistance(positions []Position) int {
+	largestDistance := 0
+	for _, position1 := range positions {
+		for _, position2 := range positions {
+			distance3D := position1.Sub(position2)
+			manhattanDistance := utils.Abs(int(distance3D[0])) + utils.Abs(int(distance3D[1])) + utils.Abs(int(distance3D[2]))
+			if manhattanDistance > largestDistance {
+				largestDistance = manhattanDistance
+			}
+		}
+	}
+	return largestDistance
 }

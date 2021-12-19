@@ -266,8 +266,28 @@ func Test_assembleBeaconMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := assembleBeaconMap(tt.args.beaconPositionsByScanner); !reflect.DeepEqual(positionsSliceToMap(got), positionsSliceToMap(tt.want)) {
+			if got, _ := assembleBeaconMap(tt.args.beaconPositionsByScanner); !reflect.DeepEqual(positionsSliceToMap(got), positionsSliceToMap(tt.want)) {
 				t.Errorf("assembleBeaconMap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_findLargestManhattanDistance(t *testing.T) {
+	type args struct {
+		positions []Position
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{"example", args{[]Position{{1105, -1205, 1229}, {-92, -2380, -20}}}, 3621},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := findLargestManhattanDistance(tt.args.positions); got != tt.want {
+				t.Errorf("findLargestManhattanDistance() = %v, want %v", got, tt.want)
 			}
 		})
 	}
