@@ -39,7 +39,7 @@ func parseInput(inputStrings []string) [][]Position {
 
 func getAllOrientations() []Orientation {
 	orientations := make([]Orientation, 0, 24)
-	for _, x := range []mgl64.Vec3{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {-1, 0, 0}, {-0, 1, 0}, {-0, 0, 1}} {
+	for _, x := range []mgl64.Vec3{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}} {
 		possibleY := make([]mgl64.Vec3, 0, 4)
 		if x.X() == 0 {
 			possibleY = append(possibleY, mgl64.Vec3{1, 0, 0}, mgl64.Vec3{-1, 0, 0})
