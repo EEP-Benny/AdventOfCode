@@ -170,6 +170,7 @@ func Test_countLitPixels(t *testing.T) {
 		want int
 	}{
 		{"exampleInput after two step", args{enhancementSteps(exampleInputImage, exampleMapping, 2)}, 35},
+		{"exampleInput after 50 step", args{enhancementSteps(exampleInputImage, exampleMapping, 50)}, 3351},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

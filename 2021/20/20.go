@@ -18,7 +18,8 @@ func main() {
 	mapping, inputImage := parseInput(input)
 	imageAfterTwoSteps := enhancementSteps(inputImage, mapping, 2)
 	fmt.Println("Solution 1:", countLitPixels(imageAfterTwoSteps))
-	// fmt.Println("Solution 2:", ???)
+	imageAfterFiftySteps := enhancementSteps(inputImage, mapping, 50)
+	fmt.Println("Solution 2:", countLitPixels(imageAfterFiftySteps))
 }
 
 func parseInput(input string) (mapping []string, image Image) {
