@@ -197,10 +197,11 @@ func Test_countActiveCubes(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want int
+		want int64
 	}{
-		{"example input", args{rebootReactor(parseInput(exampleInput), 50)}, 39},
-		// {"example input large", args{rebootReactor(parseInput(exampleInputLarge), 50)}, 590784},
+		{"example input", args{rebootReactor(parseInput(exampleInput), true)}, 39},
+		{"example input large", args{rebootReactor(parseInput(exampleInputLarge), true)}, 590784},
+		{"example input very large", args{rebootReactor(parseInput(exampleInputVeryLarge), false)}, 2758514936282235},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

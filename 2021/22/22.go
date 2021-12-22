@@ -25,8 +25,8 @@ type ReactorState = map[Cuboid]bool
 
 func main() {
 	instructions := parseInput(utils.LoadInputSlice(2021, 22, "\n"))
-	fmt.Println("Solution 1:", countActiveCubes(rebootReactor(instructions, 50)))
-	// fmt.Println("Solution 2:", ???)
+	fmt.Println("Solution 1:", countActiveCubes(rebootReactor(instructions, true)))
+	fmt.Println("Solution 2:", countActiveCubes(rebootReactor(instructions, false)))
 }
 
 func parseInput(inputLines []string) []Instruction {
@@ -81,6 +81,20 @@ func splitCuboidsZ(cuboids []Cuboid, z int) []Cuboid {
 	return cuboids
 }
 
+func intersectCuboids(cuboid1, cuboid2 Cuboid) (bool, Cuboid) {
+	_, xMin := utils.MinMax([]int{cuboid1.posMin.x, cuboid2.posMin.x})
+	xMax, _ := utils.MinMax([]int{cuboid1.posMax.x, cuboid2.posMax.x})
+	_, yMin := utils.MinMax([]int{cuboid1.posMin.y, cuboid2.posMin.y})
+	yMax, _ := utils.MinMax([]int{cuboid1.posMax.y, cuboid2.posMax.y})
+	_, zMin := utils.MinMax([]int{cuboid1.posMin.z, cuboid2.posMin.z})
+	zMax, _ := utils.MinMax([]int{cuboid1.posMax.z, cuboid2.posMax.z})
+
+	if xMin <= xMax && yMin <= yMax && zMin <= zMax {
+		return true, Cuboid{posMin: Position{xMin, yMin, zMin}, posMax: Position{xMax, yMax, zMax}}
+	}
+	return false, Cuboid{}
+}
+
 func splitCuboids(cuboidToSplit Cuboid, splittingCuboid Cuboid) []Cuboid {
 	resultingCuboids := []Cuboid{cuboidToSplit}
 	resultingCuboids = splitCuboidsX(resultingCuboids, splittingCuboid.posMin.x-1)
@@ -94,27 +108,23 @@ func splitCuboids(cuboidToSplit Cuboid, splittingCuboid Cuboid) []Cuboid {
 
 func processInstruction(instruction Instruction, reactorState ReactorState) ReactorState {
 	for cuboid, cubeState := range reactorState {
-		newCuboids := splitCuboids(cuboid, instruction.cuboid)
-		fmt.Println("Split", cuboid, "into", len(newCuboids), "cuboids:", newCuboids)
-		if len(newCuboids) > 1 {
+		if isIntersecting, intersectingCuboid := intersectCuboids(cuboid, instruction.cuboid); isIntersecting {
+			newCuboids := splitCuboids(cuboid, instruction.cuboid)
 			delete(reactorState, cuboid)
 			for _, newCuboid := range newCuboids {
 				reactorState[newCuboid] = cubeState
 			}
+			delete(reactorState, intersectingCuboid)
 		}
 	}
-	fmt.Println("After split still at", countActiveCubes(reactorState), "active cubes:", listActiveCubes(reactorState))
-
 	reactorState[instruction.cuboid] = instruction.targetState
-	fmt.Println("Now at", countActiveCubes(reactorState), "active cubes:", listActiveCubes(reactorState))
-
 	return reactorState
 }
 
-func rebootReactor(instructions []Instruction, regionSize int) ReactorState {
+func rebootReactor(instructions []Instruction, limitRegionSize bool) ReactorState {
 	reactorState := make(ReactorState)
 	for _, instruction := range instructions {
-		if utils.Abs(instruction.cuboid.posMin.x) > regionSize {
+		if limitRegionSize && utils.Abs(instruction.cuboid.posMin.x) > 50 {
 			// simplified check, seems to suffice for the given inputs
 			continue
 		}
@@ -123,32 +133,15 @@ func rebootReactor(instructions []Instruction, regionSize int) ReactorState {
 	return reactorState
 }
 
-func countActiveCubes(reactorState ReactorState) int {
-	count := 0
+func countActiveCubes(reactorState ReactorState) int64 {
+	count := int64(0)
 	for cuboid, cubeState := range reactorState {
 		if cubeState {
 			xDim := cuboid.posMax.x - cuboid.posMin.x + 1
 			yDim := cuboid.posMax.y - cuboid.posMin.y + 1
 			zDim := cuboid.posMax.z - cuboid.posMin.z + 1
-			count += xDim * yDim * zDim
+			count += int64(xDim) * int64(yDim) * int64(zDim)
 		}
 	}
 	return count
-}
-
-func listActiveCubes(reactorState ReactorState) []Position {
-	activeCubes := make([]Position, 0)
-	for cuboid, cubeState := range reactorState {
-		if cubeState {
-			for x := cuboid.posMin.x; x <= cuboid.posMax.x; x++ {
-				for y := cuboid.posMin.y; y <= cuboid.posMax.y; y++ {
-					for z := cuboid.posMin.z; z <= cuboid.posMax.z; z++ {
-						activeCubes = append(activeCubes, Position{x, y, z})
-					}
-				}
-			}
-		}
-	}
-
-	return activeCubes
 }
