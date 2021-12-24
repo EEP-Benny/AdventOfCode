@@ -38,6 +38,13 @@ func parseInput(inputLines []string) []Instruction {
 	return instructions
 }
 
+func compare(a, b int) int {
+	if a == b {
+		return 1
+	}
+	return 0
+}
+
 func makeALUState(w, x, y, z int, input []int) ALUState {
 	return ALUState{registers: map[string]int{"w": w, "x": x, "y": y, "z": z}, remainingInputValues: input}
 }
@@ -75,11 +82,7 @@ func (aluState ALUState) executeInstruction(instruction Instruction) ALUState {
 		case "mod":
 			result = valueA % valueB
 		case "eql":
-			if valueA == valueB {
-				result = 1
-			} else {
-				result = 0
-			}
+			result = compare(valueA, valueB)
 		}
 		newState.registers[instruction.a] = result
 	}
@@ -93,20 +96,26 @@ func (aluState ALUState) executeInstructions(instructions []Instruction) ALUStat
 	return aluState
 }
 
-func findLargestModelNumber(monadProgram []Instruction) int64 {
-	for modelNumber := int64(1e14); modelNumber > 0; modelNumber-- {
-		if modelNumber%100000 == 0 {
-			fmt.Println(modelNumber)
+func findLargestModelNumber(monadProgram []Instruction) string {
+	highestNumberForZSoFar := map[int]string{0: ""}
+	for index := 0; index < 14; index++ {
+		newHighestNumberForZ := make(map[int]string)
+		maxZToGetToZero := int64(1)
+		for remainingIndex := index; remainingIndex < 14; remainingIndex++ {
+			maxZToGetToZero *= 26
 		}
-		stringifiedModelNumber := strconv.Itoa(int(modelNumber))
-		if len(stringifiedModelNumber) != 14 || strings.Contains(stringifiedModelNumber, "0") {
-			continue
+		fmt.Println("index:", index, "number of z to consider:", len(highestNumberForZSoFar), ", maxZ:", maxZToGetToZero)
+		for number := 1; number <= 9; number++ {
+			for z, highestNumberSoFar := range highestNumberForZSoFar {
+				if int64(z) > maxZToGetToZero {
+					continue
+				}
+				initialALUState := makeALUState(0, 0, 0, z, []int{number})
+				finalALUState := initialALUState.executeInstructions(monadProgram[18*index : 18*(index+1)])
+				newHighestNumberForZ[finalALUState.registers["z"]] = highestNumberSoFar + strconv.Itoa(number)
+			}
 		}
-		initialALUState := makeALUState(0, 0, 0, 0, utils.IntSlice(strings.Split(stringifiedModelNumber, "")))
-		finalALUState := initialALUState.executeInstructions(monadProgram)
-		if finalALUState.registers["z"] == 0 {
-			return modelNumber
-		}
+		highestNumberForZSoFar = newHighestNumberForZ
 	}
-	return 0
+	return highestNumberForZSoFar[0]
 }
