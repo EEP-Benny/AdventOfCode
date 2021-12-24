@@ -22,7 +22,7 @@ type ALUState struct {
 func main() {
 	monadProgram := parseInput(utils.LoadInputSlice(2021, 24, "\n"))
 	fmt.Println("Solution 1:", findLargestModelNumber(monadProgram))
-	// fmt.Println("Solution 2:", ???)
+	fmt.Println("Solution 2:", findSmallestModelNumber(monadProgram))
 }
 
 func parseInput(inputLines []string) []Instruction {
@@ -96,7 +96,7 @@ func (aluState ALUState) executeInstructions(instructions []Instruction) ALUStat
 	return aluState
 }
 
-func findLargestModelNumber(monadProgram []Instruction) string {
+func findModelNumber(monadProgram []Instruction, numbersToConsider []int) string {
 	highestNumberForZSoFar := map[int]string{0: ""}
 	for index := 0; index < 14; index++ {
 		newHighestNumberForZ := make(map[int]string)
@@ -104,8 +104,8 @@ func findLargestModelNumber(monadProgram []Instruction) string {
 		for remainingIndex := index; remainingIndex < 14; remainingIndex++ {
 			maxZToGetToZero *= 26
 		}
-		fmt.Println("index:", index, "number of z to consider:", len(highestNumberForZSoFar), ", maxZ:", maxZToGetToZero)
-		for number := 1; number <= 9; number++ {
+		// fmt.Println("index:", index, "number of z to consider:", len(highestNumberForZSoFar), ", maxZ:", maxZToGetToZero)
+		for _, number := range numbersToConsider {
 			for z, highestNumberSoFar := range highestNumberForZSoFar {
 				if int64(z) > maxZToGetToZero {
 					continue
@@ -118,4 +118,11 @@ func findLargestModelNumber(monadProgram []Instruction) string {
 		highestNumberForZSoFar = newHighestNumberForZ
 	}
 	return highestNumberForZSoFar[0]
+}
+
+func findLargestModelNumber(monadProgram []Instruction) string {
+	return findModelNumber(monadProgram, []int{1, 2, 3, 4, 5, 6, 7, 8, 9})
+}
+func findSmallestModelNumber(monadProgram []Instruction) string {
+	return findModelNumber(monadProgram, []int{9, 8, 7, 6, 5, 4, 3, 2, 1})
 }
