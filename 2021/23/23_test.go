@@ -27,7 +27,7 @@ var finishedGameState = parseInput([]string{
 	"  #A#B#C#D#",
 	"  #########",
 })
-var allGameStates = []GameState{
+var allGameStates = []ComparableGameState{
 	exampleGameState,
 	parseInput([]string{
 		"#############",
@@ -102,17 +102,28 @@ func Test_parseInput(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want GameState
+		want ComparableGameState
 	}{
-		{"example input", args{exampleInput}, GameState{
-			Amphipod{"A", 1}: Position{2, 2},
-			Amphipod{"A", 2}: Position{8, 2},
-			Amphipod{"B", 1}: Position{2, 1},
-			Amphipod{"B", 2}: Position{6, 1},
-			Amphipod{"C", 1}: Position{4, 1},
-			Amphipod{"C", 2}: Position{6, 2},
-			Amphipod{"D", 1}: Position{8, 1},
-			Amphipod{"D", 2}: Position{4, 2},
+		{"example input", args{exampleInput}, ComparableGameState{
+			maxAmphipodIndex: 2,
+			positions: [16]Position{
+				{2, 2},
+				{8, 2},
+				{},
+				{},
+				{2, 1},
+				{6, 1},
+				{},
+				{},
+				{4, 1},
+				{6, 2},
+				{},
+				{},
+				{8, 1},
+				{4, 2},
+				{},
+				{},
+			},
 		}},
 	}
 	for _, tt := range tests {
@@ -124,58 +135,14 @@ func Test_parseInput(t *testing.T) {
 	}
 }
 
-func TestGameState_isOccupied(t *testing.T) {
-	type args struct {
-		pos Position
-	}
-	tests := []struct {
-		name      string
-		gameState GameState
-		args      args
-		want      bool
-	}{
-		{"empty", parseInput(exampleInput), args{Position{0, 0}}, false},
-		{"occupied", parseInput(exampleInput), args{Position{2, 2}}, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.gameState.isOccupied(tt.args.pos); got != tt.want {
-				t.Errorf("GameState.isOccupied() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestGameState_getAmphipodAt(t *testing.T) {
-	type args struct {
-		pos Position
-	}
-	tests := []struct {
-		name      string
-		gameState GameState
-		args      args
-		want      Amphipod
-	}{
-		{"empty", parseInput(exampleInput), args{Position{0, 0}}, Amphipod{}},
-		{"occupied", parseInput(exampleInput), args{Position{2, 2}}, Amphipod{"A", 1}},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.gameState.getAmphipodAt(tt.args.pos); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GameState.getAmphipodAt() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestGameState_isFinished(t *testing.T) {
 	tests := []struct {
 		name      string
 		gameState GameState
 		want      bool
 	}{
-		{"not finished", exampleGameState, false},
-		{"finished", finishedGameState, true},
+		{"not finished", exampleGameState.toGameState(), false},
+		{"finished", finishedGameState.toGameState(), true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -198,12 +165,12 @@ func TestGameState_checkPath(t *testing.T) {
 		wantIsFree    bool
 		wantStepCount int
 	}{
-		{"hallway to room (free)", middleGameState, args{Position{5, 0}, Position{4, 1}}, true, 2},
-		{"hallway to room (occupied)", middleGameState, args{Position{5, 0}, Position{4, 2}}, false, 3},
-		{"hallway to room (occupied 2)", middleGameState, args{Position{5, 0}, Position{2, 1}}, false, 4},
-		{"room to room (free)", middleGameState, args{Position{2, 1}, Position{4, 1}}, true, 4},
-		{"room to hallway (free)", middleGameState, args{Position{2, 1}, Position{3, 0}}, true, 2},
-		{"room to hallway (occupied)", middleGameState, args{Position{2, 1}, Position{7, 0}}, false, 6},
+		{"hallway to room (free)", middleGameState.toGameState(), args{Position{5, 0}, Position{4, 1}}, true, 2},
+		{"hallway to room (occupied)", middleGameState.toGameState(), args{Position{5, 0}, Position{4, 2}}, false, 3},
+		{"hallway to room (occupied 2)", middleGameState.toGameState(), args{Position{5, 0}, Position{2, 1}}, false, 4},
+		{"room to room (free)", middleGameState.toGameState(), args{Position{2, 1}, Position{4, 1}}, true, 4},
+		{"room to hallway (free)", middleGameState.toGameState(), args{Position{2, 1}, Position{3, 0}}, true, 2},
+		{"room to hallway (occupied)", middleGameState.toGameState(), args{Position{2, 1}, Position{7, 0}}, false, 6},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -224,10 +191,10 @@ func TestGameState_getPossibleMoves(t *testing.T) {
 		gameState GameState
 		want      []Move
 	}{
-		{"middle game state", middleGameState, []Move{
+		{"middle game state", middleGameState.toGameState(), []Move{
 			{Amphipod{"B", 1}, Position{4, 1}, 40},
 		}},
-		{"step 0", allGameStates[0], []Move{
+		{"step 0", allGameStates[0].toGameState(), []Move{
 			{Amphipod{"B", 1}, Position{0, 0}, 30},
 			{Amphipod{"B", 1}, Position{1, 0}, 20},
 			{Amphipod{"B", 1}, Position{3, 0}, 20},
@@ -260,10 +227,10 @@ func TestGameState_getPossibleMoves(t *testing.T) {
 			{Amphipod{"D", 1}, Position{9, 0}, 2000},
 			{Amphipod{"D", 1}, Position{10, 0}, 3000},
 		}},
-		{"step 1", allGameStates[1], []Move{
+		{"step 1", allGameStates[1].toGameState(), []Move{
 			{Amphipod{"C", 1}, Position{6, 1}, 400}, // *
 		}},
-		{"step 2", allGameStates[2], []Move{
+		{"step 2", allGameStates[2].toGameState(), []Move{
 			{Amphipod{"B", 2}, Position{0, 0}, 30},
 			{Amphipod{"B", 2}, Position{1, 0}, 20},
 
@@ -277,28 +244,28 @@ func TestGameState_getPossibleMoves(t *testing.T) {
 			{Amphipod{"D", 2}, Position{9, 0}, 7000},
 			{Amphipod{"D", 2}, Position{10, 0}, 8000},
 		}},
-		{"step 3", allGameStates[3], []Move{
+		{"step 3", allGameStates[3].toGameState(), []Move{
 			{Amphipod{"B", 1}, Position{4, 2}, 30}, // *
 		}},
-		{"step 4", allGameStates[4], []Move{
+		{"step 4", allGameStates[4].toGameState(), []Move{
 			{Amphipod{"B", 1}, Position{4, 1}, 40}, // *
 		}},
-		{"step 5", allGameStates[5], []Move{
+		{"step 5", allGameStates[5].toGameState(), []Move{
 			{Amphipod{"D", 2}, Position{7, 0}, 2000}, // *
 			{Amphipod{"D", 2}, Position{9, 0}, 2000},
 			{Amphipod{"D", 2}, Position{10, 0}, 3000},
 		}},
-		{"step 6", allGameStates[6], []Move{
+		{"step 6", allGameStates[6].toGameState(), []Move{
 			{Amphipod{"A", 2}, Position{9, 0}, 3}, // *
 			{Amphipod{"A", 2}, Position{10, 0}, 4},
 		}},
-		{"step 7", allGameStates[7], []Move{
+		{"step 7", allGameStates[7].toGameState(), []Move{
 			{Amphipod{"D", 2}, Position{8, 2}, 3000}, // *
 		}},
-		{"step 8", allGameStates[8], []Move{
+		{"step 8", allGameStates[8].toGameState(), []Move{
 			{Amphipod{"D", 1}, Position{8, 1}, 4000}, // *
 		}},
-		{"step 9", allGameStates[9], []Move{
+		{"step 9", allGameStates[9].toGameState(), []Move{
 			{Amphipod{"A", 1}, Position{2, 1}, 8}, // *
 		}},
 	}
@@ -313,7 +280,7 @@ func TestGameState_getPossibleMoves(t *testing.T) {
 
 func Test_findBestSolution(t *testing.T) {
 	type args struct {
-		initalGameState GameState
+		initalGameState ComparableGameState
 	}
 	tests := []struct {
 		name string
@@ -321,7 +288,7 @@ func Test_findBestSolution(t *testing.T) {
 		want int
 	}{
 		{"example input", args{exampleGameState}, 12521},
-		// {"example input extended", args{parseInput(extendInput(exampleInput))}, 44169},
+		// {"example input extended", args{parseInput(extendInput(exampleInput))}, 44169}, // runs into a timeout
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -378,7 +345,7 @@ func TestGameState_getBottomMostIncorrectAmphipodForColor(t *testing.T) {
 			"  #D#B#A#C#",
 			"  #A#D#C#A#",
 			"  #########",
-		}), args{"A"}, 3},
+		}).toGameState(), args{"A"}, 3},
 		{"B, last incorrect", parseInput([]string{
 			"#############",
 			"#...........#",
@@ -387,16 +354,16 @@ func TestGameState_getBottomMostIncorrectAmphipodForColor(t *testing.T) {
 			"  #D#B#A#C#",
 			"  #A#D#C#A#",
 			"  #########",
-		}), args{"B"}, 4},
+		}).toGameState(), args{"B"}, 4},
 		{"C, nothing correct", parseInput([]string{
 			"#############",
 			"#...........#",
 			"###B#C#B#D###",
 			"  #D#C#B#A#",
 			"  #D#B#A#C#",
-			"  #A#D#D#A#",
+			"  #A#C#D#A#",
 			"  #########",
-		}), args{"C"}, 4},
+		}).toGameState(), args{"C"}, 4},
 		{"D, all correct", parseInput([]string{
 			"#############",
 			"#...........#",
@@ -405,7 +372,7 @@ func TestGameState_getBottomMostIncorrectAmphipodForColor(t *testing.T) {
 			"  #D#B#A#D#",
 			"  #A#D#D#D#",
 			"  #########",
-		}), args{"D"}, 0},
+		}).toGameState(), args{"D"}, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

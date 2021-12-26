@@ -14,7 +14,15 @@ type Amphipod struct {
 	color Color
 	index int
 }
-type GameState map[Amphipod]Position
+type ComparableGameState struct {
+	maxAmphipodIndex int
+	positions        [16]Position
+}
+type GameState struct {
+	maxAmphipodIndex     int
+	positionsOfAmphipods map[Amphipod]Position
+	amphipodAtPosition   map[Position]Amphipod
+}
 type Move struct {
 	amphipod     Amphipod
 	position     Position
@@ -23,7 +31,7 @@ type Move struct {
 
 var homePositionByColor = map[Color]int{"A": 2, "B": 4, "C": 6, "D": 8}
 var requiredEnergyByColor = map[Color]int{"A": 1, "B": 10, "C": 100, "D": 1000}
-var orderedAmphipods = []Amphipod{
+var orderedAmphipods = [16]Amphipod{
 	{"A", 1}, {"A", 2}, {"A", 3}, {"A", 4},
 	{"B", 1}, {"B", 2}, {"B", 3}, {"B", 4},
 	{"C", 1}, {"C", 2}, {"C", 3}, {"C", 4},
@@ -31,51 +39,64 @@ var orderedAmphipods = []Amphipod{
 }
 
 func main() {
-	initialState := parseInput(utils.LoadInputSlice(2021, 23, "\n"))
-	fmt.Println("Solution 1:", findBestSolution(initialState))
-	// fmt.Println("Solution 2:", ???)
+	input := utils.LoadInputSlice(2021, 23, "\n")
+	fmt.Println("Solution 1:", findBestSolution(parseInput(input)))
+	fmt.Println("Solution 2:", findBestSolution(parseInput(extendInput(input))))
 }
 
 func extendInput(inputLines []string) []string {
 	return append(inputLines[:3], append([]string{"  #D#C#B#A#", "  #D#B#A#C#"}, inputLines[3:]...)...)
 }
 
-func parseInput(inputLines []string) GameState {
+func parseInput(inputLines []string) ComparableGameState {
 	lastIndexByColor := make(map[Color]int)
-	gameState := make(GameState)
+	allAmphipods := make(map[Amphipod]Position)
 	for y, inputLine := range inputLines {
 		for x, char := range strings.Split(inputLine, "") {
 			if char == "A" || char == "B" || char == "C" || char == "D" {
 				colorAtPosition := char
 				index := lastIndexByColor[colorAtPosition] + 1
 				lastIndexByColor[colorAtPosition]++
-				gameState[Amphipod{colorAtPosition, index}] = Position{x - 1, y - 1}
+				allAmphipods[Amphipod{colorAtPosition, index}] = Position{x - 1, y - 1}
 			}
+		}
+	}
+	gameState := ComparableGameState{
+		maxAmphipodIndex: lastIndexByColor["A"],
+		positions:        [16]Position{},
+	}
+	for i, amphipod := range orderedAmphipods {
+		if position, exists := allAmphipods[amphipod]; exists {
+			gameState.positions[i] = position
 		}
 	}
 	return gameState
 }
 
-func (gameState GameState) isOccupied(pos Position) bool {
-	for _, position := range gameState {
-		if position == pos {
-			return true
+func (comparableGameState ComparableGameState) toGameState() GameState {
+	gameState := GameState{
+		maxAmphipodIndex:     comparableGameState.maxAmphipodIndex,
+		positionsOfAmphipods: make(map[Amphipod]Position),
+		amphipodAtPosition:   make(map[Position]Amphipod),
+	}
+	for i, amphipod := range orderedAmphipods {
+		position := comparableGameState.positions[i]
+		if amphipod.index <= gameState.maxAmphipodIndex {
+			gameState.positionsOfAmphipods[amphipod] = position
+			gameState.amphipodAtPosition[position] = amphipod
 		}
 	}
-	return false
+
+	return gameState
+}
+
+func (gameState GameState) isOccupied(pos Position) bool {
+	_, exists := gameState.amphipodAtPosition[pos]
+	return exists
 }
 
 func (gameState GameState) getAmphipodAt(pos Position) Amphipod {
-	for amphipod, position := range gameState {
-		if position == pos {
-			return amphipod
-		}
-	}
-	return Amphipod{}
-}
-
-func (gameState GameState) getMaxY() int {
-	return len(gameState) / len(homePositionByColor)
+	return gameState.amphipodAtPosition[pos]
 }
 
 func (gameState GameState) checkPath(start, end Position) (isFree bool, stepCount int) {
@@ -108,7 +129,7 @@ func (gameState GameState) checkPath(start, end Position) (isFree bool, stepCoun
 }
 
 func (gameState GameState) isFinished() bool {
-	for amphipod, position := range gameState {
+	for position, amphipod := range gameState.amphipodAtPosition {
 		if position.y == 0 || position.x != homePositionByColor[amphipod.color] {
 			return false
 		}
@@ -118,7 +139,7 @@ func (gameState GameState) isFinished() bool {
 
 func (gameState GameState) getBottomMostIncorrectAmphipodForColor(color Color) int {
 	bottomMostIncorrectAmphipod := 0
-	for y := 1; y <= 4; y++ {
+	for y := 1; y <= gameState.maxAmphipodIndex; y++ {
 		pos := Position{x: homePositionByColor[color], y: y}
 		if !gameState.isOccupied(pos) {
 			continue
@@ -130,22 +151,22 @@ func (gameState GameState) getBottomMostIncorrectAmphipodForColor(color Color) i
 	return bottomMostIncorrectAmphipod
 }
 
-func (gameState GameState) moveTo(amphipod Amphipod, newPosition Position) GameState {
-	newGameState := make(GameState)
-	for amphipod, position := range gameState {
-		newGameState[amphipod] = position
+func (gameState ComparableGameState) moveTo(amphipodToMove Amphipod, newPosition Position) ComparableGameState {
+	for i, amphipod := range orderedAmphipods {
+		if amphipod == amphipodToMove {
+			gameState.positions[i] = newPosition
+		}
 	}
-	newGameState[amphipod] = newPosition
-	return newGameState
+	return gameState
 }
 
 func (gameState GameState) getPossibleMoves() []Move {
 	possibleMoves := make([]Move, 0)
 	for _, amphipod := range orderedAmphipods {
-		position, exists := gameState[amphipod]
-		if !exists {
+		if amphipod.index > gameState.maxAmphipodIndex {
 			continue
 		}
+		position := gameState.positionsOfAmphipods[amphipod]
 		tryPosition := func(newPosition Position) bool {
 			if isFree, stepCount := gameState.checkPath(position, newPosition); isFree {
 				energyNeeded := stepCount * requiredEnergyByColor[amphipod.color]
@@ -164,7 +185,7 @@ func (gameState GameState) getPossibleMoves() []Move {
 		}
 		if bottomMostIncorrectAmphipodForColor == 0 {
 			// try to move to home
-			for y := gameState.getMaxY(); y > 0; y-- {
+			for y := gameState.maxAmphipodIndex; y > 0; y-- {
 				pos := Position{x: homePosition, y: y}
 				if isFree, stepCount := gameState.checkPath(position, pos); isFree {
 					// if one amphipod can move home, that is the best option
@@ -184,19 +205,28 @@ func (gameState GameState) getPossibleMoves() []Move {
 	return possibleMoves
 }
 
-func findBestSolution(initalGameState GameState) int {
+func findBestSolution(initalGameState ComparableGameState) int {
+	alreadyConsideredStates := make(map[ComparableGameState]bool)
 	pq := prque.New()
 	pq.Push(initalGameState, 0)
+	counter := 0
 	for !pq.Empty() {
+		counter++
 		// fmt.Println(pq.Size())
 		val, prio := pq.Pop()
-		gameState := val.(GameState)
+		comparableGameState := val.(ComparableGameState)
+		alreadyConsideredStates[comparableGameState] = true
+		gameState := comparableGameState.toGameState()
 		energySpent := int(-prio)
 		if gameState.isFinished() {
-			return int(energySpent)
+			fmt.Println("Found solution after searching", counter, "states")
+			return energySpent
 		}
 		for _, move := range gameState.getPossibleMoves() {
-			newGameState := gameState.moveTo(move.amphipod, move.position)
+			newGameState := comparableGameState.moveTo(move.amphipod, move.position)
+			if _, exists := alreadyConsideredStates[newGameState]; exists {
+				continue
+			}
 			newEnergy := energySpent + move.energyNeeded
 			pq.Push(newGameState, -float32(newEnergy))
 		}
