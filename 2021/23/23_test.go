@@ -226,9 +226,6 @@ func TestGameState_getPossibleMoves(t *testing.T) {
 	}{
 		{"middle game state", middleGameState, []Move{
 			{Amphipod{"B", 1}, Position{4, 1}, 40},
-			{Amphipod{"D", 2}, Position{7, 0}, 2000},
-			{Amphipod{"D", 2}, Position{9, 0}, 2000},
-			{Amphipod{"D", 2}, Position{10, 0}, 3000},
 		}},
 		{"step 0", allGameStates[0], []Move{
 			{Amphipod{"B", 1}, Position{0, 0}, 30},
@@ -264,15 +261,7 @@ func TestGameState_getPossibleMoves(t *testing.T) {
 			{Amphipod{"D", 1}, Position{10, 0}, 3000},
 		}},
 		{"step 1", allGameStates[1], []Move{
-			{Amphipod{"B", 2}, Position{0, 0}, 30},
-			{Amphipod{"B", 2}, Position{1, 0}, 20},
-
 			{Amphipod{"C", 1}, Position{6, 1}, 400}, // *
-
-			{Amphipod{"D", 1}, Position{5, 0}, 4000},
-			{Amphipod{"D", 1}, Position{7, 0}, 2000},
-			{Amphipod{"D", 1}, Position{9, 0}, 2000},
-			{Amphipod{"D", 1}, Position{10, 0}, 3000},
 		}},
 		{"step 2", allGameStates[2], []Move{
 			{Amphipod{"B", 2}, Position{0, 0}, 30},
@@ -290,20 +279,9 @@ func TestGameState_getPossibleMoves(t *testing.T) {
 		}},
 		{"step 3", allGameStates[3], []Move{
 			{Amphipod{"B", 1}, Position{4, 2}, 30}, // *
-
-			{Amphipod{"B", 2}, Position{0, 0}, 30},
-			{Amphipod{"B", 2}, Position{1, 0}, 20},
-
-			{Amphipod{"D", 2}, Position{7, 0}, 2000},
-			{Amphipod{"D", 2}, Position{9, 0}, 2000},
-			{Amphipod{"D", 2}, Position{10, 0}, 3000},
 		}},
 		{"step 4", allGameStates[4], []Move{
 			{Amphipod{"B", 1}, Position{4, 1}, 40}, // *
-
-			{Amphipod{"D", 2}, Position{7, 0}, 2000},
-			{Amphipod{"D", 2}, Position{9, 0}, 2000},
-			{Amphipod{"D", 2}, Position{10, 0}, 3000},
 		}},
 		{"step 5", allGameStates[5], []Move{
 			{Amphipod{"D", 2}, Position{7, 0}, 2000}, // *
@@ -343,11 +321,96 @@ func Test_findBestSolution(t *testing.T) {
 		want int
 	}{
 		{"example input", args{exampleGameState}, 12521},
+		// {"example input extended", args{parseInput(extendInput(exampleInput))}, 44169},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := findBestSolution(tt.args.initalGameState); got != tt.want {
 				t.Errorf("findBestSolution() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_extendInput(t *testing.T) {
+	type args struct {
+		inputLines []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{"example input", args{exampleInput}, []string{
+			"#############",
+			"#...........#",
+			"###B#C#B#D###",
+			"  #D#C#B#A#",
+			"  #D#B#A#C#",
+			"  #A#D#C#A#",
+			"  #########",
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := extendInput(tt.args.inputLines); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("extendInput() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGameState_getBottomMostIncorrectAmphipodForColor(t *testing.T) {
+	type args struct {
+		color Color
+	}
+	tests := []struct {
+		name      string
+		gameState GameState
+		args      args
+		want      int
+	}{
+		{"A, only last correct", parseInput([]string{
+			"#############",
+			"#...........#",
+			"###B#C#B#D###",
+			"  #D#C#B#A#",
+			"  #D#B#A#C#",
+			"  #A#D#C#A#",
+			"  #########",
+		}), args{"A"}, 3},
+		{"B, last incorrect", parseInput([]string{
+			"#############",
+			"#...........#",
+			"###B#C#B#D###",
+			"  #D#C#B#A#",
+			"  #D#B#A#C#",
+			"  #A#D#C#A#",
+			"  #########",
+		}), args{"B"}, 4},
+		{"C, nothing correct", parseInput([]string{
+			"#############",
+			"#...........#",
+			"###B#C#B#D###",
+			"  #D#C#B#A#",
+			"  #D#B#A#C#",
+			"  #A#D#D#A#",
+			"  #########",
+		}), args{"C"}, 4},
+		{"D, all correct", parseInput([]string{
+			"#############",
+			"#...........#",
+			"###B#C#B#D###",
+			"  #D#C#B#D#",
+			"  #D#B#A#D#",
+			"  #A#D#D#D#",
+			"  #########",
+		}), args{"D"}, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.gameState.getBottomMostIncorrectAmphipodForColor(tt.args.color); got != tt.want {
+				t.Errorf("GameState.getBottomMostIncorrectAmphipodForColor() = %v, want %v", got, tt.want)
 			}
 		})
 	}

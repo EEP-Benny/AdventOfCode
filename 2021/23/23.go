@@ -24,16 +24,20 @@ type Move struct {
 var homePositionByColor = map[Color]int{"A": 2, "B": 4, "C": 6, "D": 8}
 var requiredEnergyByColor = map[Color]int{"A": 1, "B": 10, "C": 100, "D": 1000}
 var orderedAmphipods = []Amphipod{
-	{"A", 1}, {"A", 2},
-	{"B", 1}, {"B", 2},
-	{"C", 1}, {"C", 2},
-	{"D", 1}, {"D", 2},
+	{"A", 1}, {"A", 2}, {"A", 3}, {"A", 4},
+	{"B", 1}, {"B", 2}, {"B", 3}, {"B", 4},
+	{"C", 1}, {"C", 2}, {"C", 3}, {"C", 4},
+	{"D", 1}, {"D", 2}, {"D", 3}, {"D", 4},
 }
 
 func main() {
 	initialState := parseInput(utils.LoadInputSlice(2021, 23, "\n"))
 	fmt.Println("Solution 1:", findBestSolution(initialState))
 	// fmt.Println("Solution 2:", ???)
+}
+
+func extendInput(inputLines []string) []string {
+	return append(inputLines[:3], append([]string{"  #D#C#B#A#", "  #D#B#A#C#"}, inputLines[3:]...)...)
 }
 
 func parseInput(inputLines []string) GameState {
@@ -68,6 +72,10 @@ func (gameState GameState) getAmphipodAt(pos Position) Amphipod {
 		}
 	}
 	return Amphipod{}
+}
+
+func (gameState GameState) getMaxY() int {
+	return len(gameState) / len(homePositionByColor)
 }
 
 func (gameState GameState) checkPath(start, end Position) (isFree bool, stepCount int) {
@@ -108,6 +116,20 @@ func (gameState GameState) isFinished() bool {
 	return true
 }
 
+func (gameState GameState) getBottomMostIncorrectAmphipodForColor(color Color) int {
+	bottomMostIncorrectAmphipod := 0
+	for y := 1; y <= 4; y++ {
+		pos := Position{x: homePositionByColor[color], y: y}
+		if !gameState.isOccupied(pos) {
+			continue
+		}
+		if gameState.getAmphipodAt(pos).color != color {
+			bottomMostIncorrectAmphipod = y
+		}
+	}
+	return bottomMostIncorrectAmphipod
+}
+
 func (gameState GameState) moveTo(amphipod Amphipod, newPosition Position) GameState {
 	newGameState := make(GameState)
 	for amphipod, position := range gameState {
@@ -120,7 +142,10 @@ func (gameState GameState) moveTo(amphipod Amphipod, newPosition Position) GameS
 func (gameState GameState) getPossibleMoves() []Move {
 	possibleMoves := make([]Move, 0)
 	for _, amphipod := range orderedAmphipods {
-		position := gameState[amphipod]
+		position, exists := gameState[amphipod]
+		if !exists {
+			continue
+		}
 		tryPosition := func(newPosition Position) bool {
 			if isFree, stepCount := gameState.checkPath(position, newPosition); isFree {
 				energyNeeded := stepCount * requiredEnergyByColor[amphipod.color]
@@ -132,20 +157,20 @@ func (gameState GameState) getPossibleMoves() []Move {
 
 		color := amphipod.color
 		homePosition := homePositionByColor[color]
-		topHomePosition := Position{homePosition, 1}
-		bottomHomePosition := Position{homePosition, 2}
-		if position.x == homePosition && gameState.getAmphipodAt(bottomHomePosition).color == color {
+		bottomMostIncorrectAmphipodForColor := gameState.getBottomMostIncorrectAmphipodForColor(color)
+		if position.x == homePosition && position.y > bottomMostIncorrectAmphipodForColor {
 			// this amphipod is already at home, and don't have to move for a trapped amphipod of another color
 			continue
 		}
-		if !gameState.isOccupied(bottomHomePosition) {
-			if tryPosition(bottomHomePosition) {
-				continue
-			}
-		} else if gameState.getAmphipodAt(bottomHomePosition).color == color && !gameState.isOccupied(topHomePosition) {
-			// bottom row has correctly colored amphipod, go to the top one
-			if tryPosition(topHomePosition) {
-				continue
+		if bottomMostIncorrectAmphipodForColor == 0 {
+			// try to move to home
+			for y := gameState.getMaxY(); y > 0; y-- {
+				pos := Position{x: homePosition, y: y}
+				if isFree, stepCount := gameState.checkPath(position, pos); isFree {
+					// if one amphipod can move home, that is the best option
+					energyNeeded := stepCount * requiredEnergyByColor[amphipod.color]
+					return []Move{{amphipod, pos, energyNeeded}}
+				}
 			}
 		}
 		if position.y > 0 {
