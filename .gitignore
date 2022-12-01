@@ -1,1 +1,8 @@
 node_modules
+
+# Don't publish inputs
+src/year*/day*.input.txt
+
+# Added by cargo
+
+/target
