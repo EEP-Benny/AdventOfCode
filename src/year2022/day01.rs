@@ -1,11 +1,9 @@
 use crate::utils::{get_input, Splittable};
 
 fn get_list_of_calories_per_elf(input: &str) -> Vec<u32> {
-    input
-        .split_to_strings("\n\n")
-        .iter()
-        .map(|elf_string| elf_string.split_to_numbers("\n").iter().sum())
-        .collect()
+    input.split_and_map("\n\n", |elf_string| {
+        elf_string.split_to_numbers("\n").iter().sum()
+    })
 }
 
 fn part1(input: &str) -> u32 {

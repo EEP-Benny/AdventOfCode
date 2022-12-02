@@ -11,6 +11,7 @@ pub fn get_input(year: u32, day: u32) -> String {
 pub trait Splittable {
     fn split_to_strings(&self, separator: &str) -> Vec<String>;
     fn split_to_numbers(&self, separator: &str) -> Vec<u32>;
+    fn split_and_map<T>(&self, separator: &str, map_fn: fn(&String) -> T) -> Vec<T>;
 }
 
 impl Splittable for str {
@@ -26,6 +27,13 @@ impl Splittable for str {
                     .parse()
                     .expect("Input should consist of numbers")
             })
+            .collect()
+    }
+
+    fn split_and_map<T>(&self, separator: &str, map_fn: fn(&String) -> T) -> Vec<T> {
+        self.split_to_strings(separator)
+            .iter()
+            .map(map_fn)
             .collect()
     }
 }
