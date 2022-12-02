@@ -107,3 +107,43 @@ pub fn solution1() -> u32 {
 pub fn solution2() -> u32 {
     part2(&get_input(2022, 02))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_score_for_round() {
+        assert_eq!(score_for_round(&(Rock, Paper)), 8);
+        assert_eq!(score_for_round(&(Paper, Rock)), 1);
+        assert_eq!(score_for_round(&(Scissors, Scissors)), 6);
+    }
+
+    #[test]
+    fn test_total_score() {
+        assert_eq!(
+            total_score(&vec![(Rock, Paper), (Paper, Rock), (Scissors, Scissors)]),
+            15
+        );
+    }
+
+    #[test]
+    fn test_find_shape_for_outcome() {
+        assert_eq!(find_shape_for_outcome(&Rock, &Draw), Some(Rock));
+        assert_eq!(find_shape_for_outcome(&Paper, &TheyWin), Some(Rock));
+        assert_eq!(find_shape_for_outcome(&Scissors, &WeWin), Some(Rock));
+    }
+
+    #[test]
+    fn test_parts() {
+        let input = "A Y\nB X\nC Z";
+        assert_eq!(part1(input), 15);
+        assert_eq!(part2(input), 12);
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(solution1(), 14069);
+        assert_eq!(solution2(), 12411);
+    }
+}
