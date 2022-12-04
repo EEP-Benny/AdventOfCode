@@ -18,6 +18,11 @@ impl Range {
     fn fully_contains(&self, other: &Range) -> bool {
         self.start <= other.start && self.end >= other.end
     }
+
+    fn overlaps_with(&self, other: &Range) -> bool {
+        (self.start <= other.end && self.end >= other.start)
+            || (self.end >= other.start && self.start <= other.end)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -38,18 +43,34 @@ impl PairOfRanges {
     fn has_total_overlap(self: &Self) -> bool {
         self.range1.fully_contains(&self.range2) || self.range2.fully_contains(&self.range1)
     }
+
+    fn has_some_overlap(self: &Self) -> bool {
+        self.range1.overlaps_with(&self.range2)
+    }
 }
 
 fn part1(input: &str) -> u32 {
     input
         .split_and_map("\n", |line| PairOfRanges::new(line))
         .iter()
-        .filter(|por| por.has_total_overlap())
+        .filter(|pair_of_ranges| pair_of_ranges.has_total_overlap())
+        .count() as u32
+}
+
+fn part2(input: &str) -> u32 {
+    input
+        .split_and_map("\n", |line| PairOfRanges::new(line))
+        .iter()
+        .filter(|pair_of_ranges| pair_of_ranges.has_some_overlap())
         .count() as u32
 }
 
 pub fn solution1() -> u32 {
     part1(&get_input(2022, 04))
+}
+
+pub fn solution2() -> u32 {
+    part2(&get_input(2022, 04))
 }
 
 #[cfg(test)]
@@ -78,6 +99,13 @@ mod tests {
     }
 
     #[test]
+    fn test_overlaps_with() {
+        assert_eq!(Range::new("2-4").overlaps_with(&Range::new("5-8")), false);
+        assert_eq!(Range::new("5-7").overlaps_with(&Range::new("7-9")), true);
+        assert_eq!(Range::new("5-7").overlaps_with(&Range::new("1-5")), true);
+    }
+
+    #[test]
     fn test_pair_of_ranges_from_string() {
         assert_eq!(
             PairOfRanges::new("2-4,6-8"),
@@ -91,17 +119,28 @@ mod tests {
     #[test]
     fn test_has_total_overlap() {
         assert_eq!(PairOfRanges::new("2-4,6-8").has_total_overlap(), false);
-        assert_eq!(PairOfRanges::new("2-8,3-7").has_total_overlap(), false);
-        assert_eq!(PairOfRanges::new("6-6,4-6").has_total_overlap(), false);
+        assert_eq!(PairOfRanges::new("5-7,7-9").has_total_overlap(), false);
+        assert_eq!(PairOfRanges::new("2-8,3-7").has_total_overlap(), true);
+        assert_eq!(PairOfRanges::new("6-6,4-6").has_total_overlap(), true);
+    }
+
+    #[test]
+    fn test_has_some_overlap() {
+        assert_eq!(PairOfRanges::new("2-4,6-8").has_some_overlap(), false);
+        assert_eq!(PairOfRanges::new("5-7,7-9").has_some_overlap(), true);
+        assert_eq!(PairOfRanges::new("2-8,3-7").has_some_overlap(), true);
+        assert_eq!(PairOfRanges::new("6-6,4-6").has_some_overlap(), true);
     }
 
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 2);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 4);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 576);
+        assert_eq!(solution2(), 905);
     }
 }
