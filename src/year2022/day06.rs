@@ -18,12 +18,22 @@ fn find_position_of_first_start_of_packet_marker(input: &str) -> u32 {
     panic!("Didn't find a start-of-packet-marker");
 }
 
-fn part1(input: &str) -> u32 {
-    find_position_of_first_start_of_packet_marker(input)
+fn find_position_of_first_start_of_message_marker(input: &str) -> u32 {
+    for i in 14..input.len() {
+        let substr = &input[i - 14..i];
+        if is_start_of_packet_marker(&substr) {
+            return i as u32;
+        };
+    }
+    panic!("Didn't find a start-of-message-marker");
 }
 
 pub fn solution1() -> u32 {
-    part1(&get_input(2022, 06))
+    find_position_of_first_start_of_packet_marker(&get_input(2022, 06))
+}
+
+pub fn solution2() -> u32 {
+    find_position_of_first_start_of_message_marker(&get_input(2022, 06))
 }
 
 #[cfg(test)]
@@ -59,9 +69,33 @@ mod tests {
             11
         );
     }
+    #[test]
+    fn test_find_position_of_first_start_of_message_marker() {
+        assert_eq!(
+            find_position_of_first_start_of_message_marker("mjqjpqmgbljsphdztnvjfqwrcgsmlb"),
+            19
+        );
+        assert_eq!(
+            find_position_of_first_start_of_message_marker("bvwbjplbgvbhsrlpgdmjqwftvncz"),
+            23
+        );
+        assert_eq!(
+            find_position_of_first_start_of_message_marker("nppdvjthqldpwncqszvftbrmjlhg"),
+            23
+        );
+        assert_eq!(
+            find_position_of_first_start_of_message_marker("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"),
+            29
+        );
+        assert_eq!(
+            find_position_of_first_start_of_message_marker("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"),
+            26
+        );
+    }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 1356);
+        assert_eq!(solution2(), 2564);
     }
 }
