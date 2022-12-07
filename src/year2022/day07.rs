@@ -62,6 +62,16 @@ impl FileSystem {
         }
     }
 
+    fn get_directory_sizes(self: &Self) -> Vec<u32> {
+        self.all_entries
+            .iter()
+            .filter_map(|(name, entry)| match entry {
+                Entry::Directory { .. } => Some(self.size_of(name)),
+                _ => None,
+            })
+            .collect()
+    }
+
     fn add_directory_contents(self: &mut Self, output: &str) {
         for string_entry in output.lines() {
             let (name, entry) = match string_entry.split_once(" ") {
@@ -102,20 +112,29 @@ impl FileSystem {
 }
 
 fn part1(input: &str) -> u32 {
-    let file_system = FileSystem::from_input_string(input);
-    let directory_sizes: Vec<u32> = file_system
-        .all_entries
+    FileSystem::from_input_string(input)
+        .get_directory_sizes()
         .iter()
-        .filter_map(|(name, entry)| match entry {
-            Entry::Directory { .. } => Some(file_system.size_of(name)),
-            _ => None,
-        })
-        .collect();
-    directory_sizes.iter().filter(|size| size <= &&100000).sum()
+        .filter(|size| size <= &&100000)
+        .sum()
+}
+
+fn part2(input: &str) -> u32 {
+    let mut directory_sizes = FileSystem::from_input_string(input).get_directory_sizes();
+    directory_sizes.sort();
+    let space_required = directory_sizes.last().unwrap() - (70000000 - 30000000);
+    *directory_sizes
+        .iter()
+        .find(|dir_size| dir_size >= &&space_required)
+        .unwrap()
 }
 
 pub fn solution1() -> u32 {
     part1(&get_input(2022, 07))
+}
+
+pub fn solution2() -> u32 {
+    part2(&get_input(2022, 07))
 }
 
 #[cfg(test)]
@@ -161,10 +180,12 @@ $ ls
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 95437);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 24933642);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 1908462);
+        assert_eq!(solution2(), 3979145);
     }
 }
