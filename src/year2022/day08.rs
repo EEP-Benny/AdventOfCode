@@ -27,6 +27,29 @@ impl GridOfTrees {
             .and_then(|row| row.get(position.0 as usize))
     }
 
+    fn is_in_grid(&self, position: Position) -> bool {
+        self.get(position).is_some()
+    }
+
+    fn iterate_over_all_positions(&self) -> GridPositionsIter<'_> {
+        GridPositionsIter {
+            next_position: (0, 0),
+            grid: self,
+        }
+    }
+
+    fn iterate_from_position_in_direction(
+        &self,
+        current_position: Position,
+        direction: Position,
+    ) -> GridDirectionalPositionsIter<'_> {
+        GridDirectionalPositionsIter {
+            grid: self,
+            direction,
+            current_position,
+        }
+    }
+
     fn from_input_string(input: &str) -> Self {
         Self(input.split_and_map("\n", |line| {
             line.chars()
@@ -37,21 +60,12 @@ impl GridOfTrees {
 
     fn is_tree_visible_from_direction(&self, tree_position: Position, direction: Position) -> bool {
         let tree_size = self[tree_position];
-        let mut position = tree_position;
-        loop {
-            position.0 += direction.0;
-            position.1 += direction.1;
-            match self.get(position) {
-                Some(size) => {
-                    if size >= &tree_size {
-                        return false; // hidden by this tree
-                    };
-                }
-                None => {
-                    return true; // found the edge
-                }
+        for position in self.iterate_from_position_in_direction(tree_position, direction) {
+            if self[position] >= tree_size {
+                return false; // hidden by this tree
             };
         }
+        return true; // found the edge
     }
 
     fn is_tree_visible_from_outside(&self, tree_position: Position) -> bool {
@@ -62,15 +76,9 @@ impl GridOfTrees {
     }
 
     fn count_visible_trees(&self) -> u32 {
-        let mut count = 0;
-        for y in 0..self.0.len() {
-            for x in 0..self.0[y].len() {
-                if self.is_tree_visible_from_outside((x as i32, y as i32)) {
-                    count += 1;
-                }
-            }
-        }
-        count
+        self.iterate_over_all_positions()
+            .filter(|position| self.is_tree_visible_from_outside(*position))
+            .count() as u32
     }
 
     fn get_viewing_distance_in_direction(
@@ -79,23 +87,14 @@ impl GridOfTrees {
         direction: Position,
     ) -> u32 {
         let tree_size = self[tree_position];
-        let mut position = tree_position;
         let mut count_of_visible_trees = 0;
-        loop {
-            position.0 += direction.0;
-            position.1 += direction.1;
-            match self.get(position) {
-                Some(size) => {
-                    count_of_visible_trees += 1;
-                    if size >= &tree_size {
-                        return count_of_visible_trees; // no further trees visible
-                    };
-                }
-                None => {
-                    return count_of_visible_trees; // found the edge
-                }
+        for position in self.iterate_from_position_in_direction(tree_position, direction) {
+            count_of_visible_trees += 1;
+            if self[position] >= tree_size {
+                break; // no further trees visible
             };
         }
+        count_of_visible_trees
     }
 
     fn get_scenic_score(&self, tree_position: Position) -> u32 {
@@ -106,16 +105,54 @@ impl GridOfTrees {
     }
 
     fn get_highest_scenic_score(&self) -> u32 {
-        let mut highest_scenic_score = 0;
-        for y in 0..self.0.len() {
-            for x in 0..self.0[y].len() {
-                let scenic_score = self.get_scenic_score((x as i32, y as i32));
-                if scenic_score > highest_scenic_score {
-                    highest_scenic_score = scenic_score;
-                }
-            }
+        self.iterate_over_all_positions()
+            .map(|position| self.get_scenic_score(position))
+            .max()
+            .expect("There should be a highest scenic score")
+    }
+}
+
+struct GridPositionsIter<'a> {
+    grid: &'a GridOfTrees,
+    next_position: Position,
+}
+
+impl<'a> Iterator for GridPositionsIter<'a> {
+    type Item = Position;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if !self.grid.is_in_grid(self.next_position) {
+            self.next_position.0 = 0;
+            self.next_position.1 += 1;
         }
-        highest_scenic_score
+        let current_position = self.next_position;
+        self.next_position.0 += 1;
+        if self.grid.is_in_grid(current_position) {
+            Some(current_position)
+        } else {
+            None
+        }
+    }
+}
+
+struct GridDirectionalPositionsIter<'a> {
+    grid: &'a GridOfTrees,
+    direction: Position,
+    current_position: Position,
+}
+
+impl<'a> Iterator for GridDirectionalPositionsIter<'a> {
+    type Item = Position;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.current_position.0 += self.direction.0;
+        self.current_position.1 += self.direction.1;
+
+        if self.grid.is_in_grid(self.current_position) {
+            Some(self.current_position)
+        } else {
+            None
+        }
     }
 }
 
