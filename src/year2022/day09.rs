@@ -1,4 +1,4 @@
-use std::{collections::HashSet, iter::repeat};
+use std::{cmp::max, collections::HashSet, iter::repeat};
 
 use crate::utils::get_input;
 
@@ -28,22 +28,15 @@ impl Rope {
         self.knot_positions[0].1 += direction.1;
         for i in 1..rope_length {
             let previous = self.knot_positions[i - 1];
-            let mut current = self.knot_positions[i];
+            let current = self.knot_positions[i];
             let diff_x = previous.0 - current.0;
             let diff_y = previous.1 - current.1;
-            match (diff_x, diff_y) {
-                (-1..=1, -1..=1) => { /* nothing to do */ }
-                (-2..=-1, 2) | (-2, 1..=2) => current = (current.0 - 1, current.1 + 1), // move left up
-                (-2, 0) => current.0 = current.0 - 1, // move straight left
-                (-2, -2..=-1) | (-2..=-1, -2) => current = (current.0 - 1, current.1 - 1), // move left down
-                (0, -2) => current.1 = current.1 - 1, // move straight down
-                (1..=2, -2) | (2, -2..=-1) => current = (current.0 + 1, current.1 - 1), // move right down
-                (2, 0) => current.0 = current.0 + 1, // move straight right
-                (2, 1..=2) | (1..=2, 2) => current = (current.0 + 1, current.1 + 1), // move right up
-                (0, 2) => current.1 = current.1 + 1, // move straight up
-                _ => panic!("Rope broke, shouldn't happen ({diff_x}, {diff_y})"),
+
+            // knot only needs to move if it is *more* than 1 away in either direction
+            if max(diff_x.abs(), diff_y.abs()) > 1 {
+                self.knot_positions[i].0 += diff_x.signum(); // sign of the x difference (-1, 0 or +1)
+                self.knot_positions[i].1 += diff_y.signum(); // sign of the y difference (-1, 0 or +1)
             }
-            self.knot_positions[i] = current;
         }
         self.positions_visited_by_tail
             .insert(self.knot_positions[rope_length - 1]);
