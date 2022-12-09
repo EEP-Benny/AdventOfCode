@@ -11,32 +11,42 @@ const DOWN: Position = (0, -1);
 
 #[derive(Debug, PartialEq)]
 struct Rope {
-    head: Position,
-    tail: Position,
+    knot_positions: Vec<Position>,
     positions_visited_by_tail: HashSet<Position>,
 }
 
 impl Rope {
-    fn new() -> Self {
+    fn with_length(length: usize) -> Self {
         Self {
-            head: (0, 0),
-            tail: (0, 0),
+            knot_positions: [(0, 0)].repeat(length),
             positions_visited_by_tail: HashSet::new(),
         }
     }
     fn simulate_step(&mut self, direction: Position) {
-        self.head.0 += direction.0;
-        self.head.1 += direction.1;
-        if self.tail.0 < self.head.0 - 1 {
-            self.tail = (self.head.0 - 1, self.head.1)
-        } else if self.tail.0 > self.head.0 + 1 {
-            self.tail = (self.head.0 + 1, self.head.1)
-        } else if self.tail.1 < self.head.1 - 1 {
-            self.tail = (self.head.0, self.head.1 - 1)
-        } else if self.tail.1 > self.head.1 + 1 {
-            self.tail = (self.head.0, self.head.1 + 1)
+        let rope_length = self.knot_positions.len();
+        self.knot_positions[0].0 += direction.0;
+        self.knot_positions[0].1 += direction.1;
+        for i in 1..rope_length {
+            let previous = self.knot_positions[i - 1];
+            let mut current = self.knot_positions[i];
+            let diff_x = previous.0 - current.0;
+            let diff_y = previous.1 - current.1;
+            match (diff_x, diff_y) {
+                (-1..=1, -1..=1) => { /* nothing to do */ }
+                (-2..=-1, 2) | (-2, 1..=2) => current = (current.0 - 1, current.1 + 1), // move left up
+                (-2, 0) => current.0 = current.0 - 1, // move straight left
+                (-2, -2..=-1) | (-2..=-1, -2) => current = (current.0 - 1, current.1 - 1), // move left down
+                (0, -2) => current.1 = current.1 - 1, // move straight down
+                (1..=2, -2) | (2, -2..=-1) => current = (current.0 + 1, current.1 - 1), // move right down
+                (2, 0) => current.0 = current.0 + 1, // move straight right
+                (2, 1..=2) | (1..=2, 2) => current = (current.0 + 1, current.1 + 1), // move right up
+                (0, 2) => current.1 = current.1 + 1, // move straight up
+                _ => panic!("Rope broke, shouldn't happen ({diff_x}, {diff_y})"),
+            }
+            self.knot_positions[i] = current;
         }
-        self.positions_visited_by_tail.insert(self.tail);
+        self.positions_visited_by_tail
+            .insert(self.knot_positions[rope_length - 1]);
     }
 
     fn simulate_steps(&mut self, directions: Vec<Position>) {
@@ -65,13 +75,23 @@ fn parse_input(input: &str) -> Vec<Position> {
 }
 
 fn part1(input: &str) -> u32 {
-    let mut rope = Rope::new();
+    let mut rope = Rope::with_length(2);
+    rope.simulate_steps(parse_input(input));
+    rope.positions_visited_by_tail.len() as u32
+}
+
+fn part2(input: &str) -> u32 {
+    let mut rope = Rope::with_length(10);
     rope.simulate_steps(parse_input(input));
     rope.positions_visited_by_tail.len() as u32
 }
 
 pub fn solution1() -> u32 {
     part1(&get_input(2022, 09))
+}
+
+pub fn solution2() -> u32 {
+    part2(&get_input(2022, 09))
 }
 
 #[cfg(test)]
@@ -87,6 +107,16 @@ R 4
 D 1
 L 5
 R 2
+";
+    const EXAMPLE_INPUT_2: &str = "
+R 5
+U 8
+L 8
+D 3
+R 17
+D 10
+L 25
+U 20
 ";
 
     #[test]
@@ -108,38 +138,37 @@ R 2
 
     #[test]
     fn test_simulate_step() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::with_length(2);
         rope.simulate_step(RIGHT);
-        assert_eq!([rope.head, rope.tail], [(1, 0), (0, 0)]);
+        assert_eq!(rope.knot_positions, [(1, 0), (0, 0)]);
         rope.simulate_step(RIGHT);
-        assert_eq!([rope.head, rope.tail], [(2, 0), (1, 0)]);
+        assert_eq!(rope.knot_positions, [(2, 0), (1, 0)]);
         rope.simulate_step(UP);
-        assert_eq!([rope.head, rope.tail], [(2, 1), (1, 0)]);
+        assert_eq!(rope.knot_positions, [(2, 1), (1, 0)]);
         rope.simulate_step(UP);
-        assert_eq!([rope.head, rope.tail], [(2, 2), (2, 1)]);
+        assert_eq!(rope.knot_positions, [(2, 2), (2, 1)]);
         rope.simulate_step(LEFT);
-        assert_eq!([rope.head, rope.tail], [(1, 2), (2, 1)]);
+        assert_eq!(rope.knot_positions, [(1, 2), (2, 1)]);
         rope.simulate_step(LEFT);
-        assert_eq!([rope.head, rope.tail], [(0, 2), (1, 2)]);
+        assert_eq!(rope.knot_positions, [(0, 2), (1, 2)]);
         rope.simulate_step(DOWN);
-        assert_eq!([rope.head, rope.tail], [(0, 1), (1, 2)]);
+        assert_eq!(rope.knot_positions, [(0, 1), (1, 2)]);
         rope.simulate_step(RIGHT);
-        assert_eq!([rope.head, rope.tail], [(1, 1), (1, 2)]);
+        assert_eq!(rope.knot_positions, [(1, 1), (1, 2)]);
         rope.simulate_step(RIGHT);
-        assert_eq!([rope.head, rope.tail], [(2, 1), (1, 2)]);
+        assert_eq!(rope.knot_positions, [(2, 1), (1, 2)]);
         rope.simulate_step(RIGHT);
-        assert_eq!([rope.head, rope.tail], [(3, 1), (2, 1)]);
+        assert_eq!(rope.knot_positions, [(3, 1), (2, 1)]);
     }
 
     #[test]
     fn test_simulate_steps() {
-        let mut rope = Rope::new();
+        let mut rope = Rope::with_length(2);
         rope.simulate_steps(parse_input(EXAMPLE_INPUT.trim()));
         assert_eq!(
             rope,
             Rope {
-                head: (2, 2),
-                tail: (1, 2),
+                knot_positions: vec![(2, 2), (1, 2)],
                 positions_visited_by_tail: HashSet::from([
                     (0, 0),
                     (1, 0),
@@ -160,12 +189,38 @@ R 2
     }
 
     #[test]
+    fn test_simulate_steps_10() {
+        let mut rope = Rope::with_length(10);
+        rope.simulate_steps(parse_input(EXAMPLE_INPUT.trim()));
+        assert_eq!(
+            rope,
+            Rope {
+                knot_positions: vec![
+                    (2, 2),
+                    (1, 2),
+                    (2, 2),
+                    (3, 2),
+                    (2, 2),
+                    (1, 1),
+                    (0, 0),
+                    (0, 0),
+                    (0, 0),
+                    (0, 0)
+                ],
+                positions_visited_by_tail: HashSet::from([(0, 0)])
+            }
+        );
+    }
+
+    #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 13);
+        assert_eq!(part2(EXAMPLE_INPUT_2.trim()), 36);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 6271);
+        assert_eq!(solution2(), 2458);
     }
 }
