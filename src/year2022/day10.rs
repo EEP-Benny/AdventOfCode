@@ -14,7 +14,7 @@ struct VideoSystem {
 impl VideoSystem {
     fn new() -> Self {
         Self {
-            register_at_cycle: vec![1, 1],
+            register_at_cycle: vec![1],
         }
     }
     fn run_instruction(&mut self, instruction: Instruction) {
@@ -40,8 +40,28 @@ impl VideoSystem {
     fn get_interesting_signal_strengths(&self, indices: &[usize]) -> i32 {
         indices
             .iter()
-            .map(|&index| index as i32 * self.register_at_cycle[index])
+            .map(|&index| index as i32 * self.register_at_cycle[index - 1])
             .sum()
+    }
+
+    fn get_crt_image(&self) -> String {
+        let total_cycle_count = self.register_at_cycle.len();
+        let mut screen: Vec<char> = Vec::with_capacity(total_cycle_count);
+        for (cycle, register_value) in self.register_at_cycle.iter().enumerate() {
+            // something is off by one...
+            if cycle == total_cycle_count - 1 {
+                break;
+            }
+            let position = cycle as i32 % 40;
+            if position == 0 && cycle != 0 {
+                screen.push('\n');
+            }
+            screen.push(match position - register_value {
+                -1..=1 => '#',
+                _ => '.',
+            });
+        }
+        screen.iter().collect()
     }
 }
 
@@ -69,8 +89,18 @@ fn part1(input: &str) -> u32 {
         .unwrap()
 }
 
+fn part2(input: &str) -> String {
+    let mut video_system = VideoSystem::new();
+    video_system.run_instructions(parse_input(input));
+    video_system.get_crt_image()
+}
+
 pub fn solution1() -> u32 {
     part1(&get_input(2022, 10))
+}
+
+pub fn solution2() -> String {
+    part2(&get_input(2022, 10))
 }
 
 #[cfg(test)]
@@ -96,16 +126,39 @@ mod tests {
     fn test_run_instructions() {
         let mut video_system = VideoSystem::new();
         video_system.run_instructions(parse_input(EXAMPLE_INPUT_SHORT));
-        assert_eq!(video_system.register_at_cycle, vec![1, 1, 1, 1, 4, 4, -1]);
+        assert_eq!(video_system.register_at_cycle, vec![1, 1, 1, 4, 4, -1]);
     }
 
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT_LONG), 13140);
+        assert_eq!(
+            part2(EXAMPLE_INPUT_LONG),
+            "
+##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....
+"
+            .trim()
+        );
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 12880);
+        assert_eq!(
+            solution2(),
+            "
+####..##....##..##..###....##.###..####.
+#....#..#....#.#..#.#..#....#.#..#.#....
+###..#.......#.#..#.#..#....#.#..#.###..
+#....#.......#.####.###.....#.###..#....
+#....#..#.#..#.#..#.#....#..#.#.#..#....
+#.....##...##..#..#.#.....##..#..#.####."
+                .trim()
+        );
     }
 }
