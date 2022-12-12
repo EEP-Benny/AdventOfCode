@@ -7,7 +7,7 @@ use std::{
 
 use crate::utils::get_input;
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Position {
     x: i32,
     y: i32,
@@ -46,7 +46,7 @@ impl Index<Position> for HeightMap {
     type Output = u32;
 
     fn index(&self, index: Position) -> &Self::Output {
-        &self.0[index.x as usize][index.y as usize]
+        &self.0[index.y as usize][index.x as usize]
     }
 }
 
@@ -55,6 +55,49 @@ impl HeightMap {
         self.0
             .get(position.y as usize)
             .and_then(|row| row.get(position.x as usize))
+    }
+
+    fn is_in_grid(&self, position: &Position) -> bool {
+        self.get(position).is_some()
+    }
+
+    fn find_shortest_path(
+        &self,
+        start_position: &Position,
+        end_position: &Position,
+    ) -> Option<u32> {
+        let mut exploration_state = ExplorationState::new(self, start_position, end_position);
+        exploration_state.find_shortest_path_to_target()
+    }
+
+    fn iterate_over_all_positions(&self) -> GridPositionsIter<'_> {
+        GridPositionsIter {
+            next_position: Position::new(0, 0),
+            grid: self,
+        }
+    }
+}
+
+struct GridPositionsIter<'a> {
+    grid: &'a HeightMap,
+    next_position: Position,
+}
+
+impl<'a> Iterator for GridPositionsIter<'a> {
+    type Item = Position;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if !self.grid.is_in_grid(&self.next_position) {
+            self.next_position.x = 0;
+            self.next_position.y += 1;
+        }
+        let current_position = self.next_position;
+        self.next_position.x += 1;
+        if self.grid.is_in_grid(&current_position) {
+            Some(current_position)
+        } else {
+            None
+        }
     }
 }
 
@@ -88,7 +131,7 @@ impl PartialOrd for State {
 
 impl State {
     fn new(
-        position: Position,
+        position: &Position,
         current_height: u32,
         end_position: &Position,
         steps_so_far: u32,
@@ -97,46 +140,25 @@ impl State {
             min_steps_to_target: (26 - current_height)
                 .max(position.manhattan_distance(&end_position)),
             steps_so_far,
-            position,
+            position: position.clone(),
         }
     }
 }
 
 #[derive(Debug)]
-struct ExplorationState {
-    height_map: HeightMap,
-    end_position: Position,
+struct ExplorationState<'a> {
+    height_map: &'a HeightMap,
+    end_position: &'a Position,
     positions_to_explore_next: BinaryHeap<State>,
     shortest_distance_to_position: HashMap<Position, u32>,
 }
 
-impl ExplorationState {
-    fn from_input_string(input: &str) -> Self {
-        let mut start_position = Position::new(0, 0);
-        let mut end_position = Position::new(0, 0);
-        let height_map = HeightMap(
-            input
-                .lines()
-                .enumerate()
-                .map(|(y, line)| {
-                    line.chars()
-                        .enumerate()
-                        .map(|(x, char)| match char {
-                            letter @ 'a'..='z' => letter as u32 - 'a' as u32 + 1,
-                            'S' => {
-                                start_position = Position::new(x as i32, y as i32);
-                                1
-                            }
-                            'E' => {
-                                end_position = Position::new(x as i32, y as i32);
-                                26
-                            }
-                            default => panic!("Unexpected height map entry: {default}"),
-                        })
-                        .collect()
-                })
-                .collect(),
-        );
+impl<'a> ExplorationState<'a> {
+    fn new(
+        height_map: &'a HeightMap,
+        start_position: &'a Position,
+        end_position: &'a Position,
+    ) -> Self {
         let start_state = State::new(start_position, 1, &end_position, 0);
         Self {
             height_map,
@@ -167,7 +189,7 @@ impl ExplorationState {
                 (Some(&old_height), Some(&new_height)) => {
                     if old_height + 1 >= new_height {
                         self.positions_to_explore_next.push(State::new(
-                            new_position,
+                            &new_position,
                             new_height,
                             &self.end_position,
                             state.steps_so_far + 1,
@@ -182,22 +204,72 @@ impl ExplorationState {
             .insert(state.position, state.steps_so_far);
     }
 
-    fn find_shortest_path_to_target(&mut self) -> u32 {
+    fn find_shortest_path_to_target(&mut self) -> Option<u32> {
         loop {
+            if self.positions_to_explore_next.is_empty() {
+                return None;
+            }
             if let Some(&step_count) = self.shortest_distance_to_position.get(&self.end_position) {
-                return step_count;
+                return Some(step_count);
             }
             self.single_step();
         }
     }
 }
 
+fn parse_input(input: &str) -> (HeightMap, Position, Position) {
+    let mut start_position = Position::new(0, 0);
+    let mut end_position = Position::new(0, 0);
+    let height_map = HeightMap(
+        input
+            .lines()
+            .enumerate()
+            .map(|(y, line)| {
+                line.chars()
+                    .enumerate()
+                    .map(|(x, char)| match char {
+                        letter @ 'a'..='z' => letter as u32 - 'a' as u32 + 1,
+                        'S' => {
+                            start_position = Position::new(x as i32, y as i32);
+                            1
+                        }
+                        'E' => {
+                            end_position = Position::new(x as i32, y as i32);
+                            26
+                        }
+                        default => panic!("Unexpected height map entry: {default}"),
+                    })
+                    .collect()
+            })
+            .collect(),
+    );
+    (height_map, start_position, end_position)
+}
+
 fn part1(input: &str) -> u32 {
-    ExplorationState::from_input_string(input).find_shortest_path_to_target()
+    let (height_map, start_position, end_position) = parse_input(input);
+    height_map
+        .find_shortest_path(&start_position, &end_position)
+        .expect("There should be a path")
+}
+
+fn part2(input: &str) -> u32 {
+    let (height_map, _, end_position) = parse_input(input);
+    let possible_start_positions = height_map
+        .iterate_over_all_positions()
+        .filter(|&position| height_map[position] == 1);
+    possible_start_positions
+        .filter_map(|start_position| height_map.find_shortest_path(&start_position, &end_position))
+        .min()
+        .expect("There should be a minimum")
 }
 
 pub fn solution1() -> u32 {
     part1(&get_input(2022, 12))
+}
+
+pub fn solution2() -> u32 {
+    part2(&get_input(2022, 12))
 }
 
 #[cfg(test)]
@@ -213,10 +285,10 @@ abdefghi
 ";
 
     #[test]
-    fn test_parse_input_string() {
-        let exploration_state = ExplorationState::from_input_string(EXAMPLE_INPUT.trim());
+    fn test_parse_input() {
+        let (height_map, start_position, end_position) = parse_input(EXAMPLE_INPUT.trim());
         assert_eq!(
-            exploration_state.height_map,
+            height_map,
             HeightMap(vec![
                 vec![1, 1, 2, 17, 16, 15, 14, 13],
                 vec![1, 2, 3, 18, 25, 24, 24, 12],
@@ -225,25 +297,19 @@ abdefghi
                 vec![1, 2, 4, 5, 6, 7, 8, 9],
             ])
         );
-        assert_eq!(exploration_state.end_position, Position::new(5, 2));
-        assert_eq!(exploration_state.positions_to_explore_next.len(), 1);
-        assert_eq!(
-            exploration_state.positions_to_explore_next.peek(),
-            Some(&State {
-                min_steps_to_target: 25,
-                position: Position::new(0, 0),
-                steps_so_far: 0
-            })
-        );
+        assert_eq!(start_position, Position::new(0, 0));
+        assert_eq!(end_position, Position::new(5, 2));
     }
 
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 31);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 29);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 408);
+        assert_eq!(solution2(), 399);
     }
 }
