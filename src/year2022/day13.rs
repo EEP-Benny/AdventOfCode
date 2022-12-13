@@ -88,6 +88,15 @@ fn parse_input(input: &str) -> Vec<Pair> {
     input.split_and_map("\n\n", Pair::from_string)
 }
 
+fn sort_input(input: &str) -> Vec<PacketValue> {
+    let mut packets: Vec<PacketValue> =
+        input.lines().filter_map(PacketValue::from_string).collect();
+    packets.push(PacketValue::from_string("[[2]]").unwrap());
+    packets.push(PacketValue::from_string("[[6]]").unwrap());
+    packets.sort();
+    packets
+}
+
 fn part1(input: &str) -> u32 {
     parse_input(input)
         .iter()
@@ -102,8 +111,28 @@ fn part1(input: &str) -> u32 {
         .sum()
 }
 
+fn part2(input: &str) -> u32 {
+    let divider_packet_1 = PacketValue::from_string("[[2]]").unwrap();
+    let divider_packet_2 = PacketValue::from_string("[[6]]").unwrap();
+    sort_input(input)
+        .iter()
+        .zip(1..)
+        .filter_map(|(packet, index)| {
+            if packet == &divider_packet_1 || packet == &divider_packet_2 {
+                Some(index)
+            } else {
+                None
+            }
+        })
+        .product()
+}
+
 pub fn solution1() -> u32 {
     part1(&get_input(2022, 13))
+}
+
+pub fn solution2() -> u32 {
+    part2(&get_input(2022, 13))
 }
 
 #[cfg(test)]
@@ -198,12 +227,44 @@ mod tests {
     }
 
     #[test]
+    fn test_sort_input() {
+        assert_eq!(
+            sort_input(EXAMPLE_INPUT.trim()),
+            "
+[]
+[[]]
+[[[]]]
+[1,1,3,1,1]
+[1,1,5,1,1]
+[[1],[2,3,4]]
+[1,[2,[3,[4,[5,6,0]]]],8,9]
+[1,[2,[3,[4,[5,6,7]]]],8,9]
+[[1],4]
+[[2]]
+[3]
+[[4,4],4,4]
+[[4,4],4,4,4]
+[[6]]
+[7,7,7]
+[7,7,7,7]
+[[8,7,6]]
+[9]"
+            .trim()
+            .lines()
+            .filter_map(PacketValue::from_string)
+            .collect::<Vec<PacketValue>>()
+        );
+    }
+
+    #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 13);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 140);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 5882);
+        assert_eq!(solution2(), 24948);
     }
 }
