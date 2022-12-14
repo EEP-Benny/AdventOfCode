@@ -78,8 +78,20 @@ impl Cave {
         }
     }
 
+    fn add_floor(&mut self) {
+        self.deepest_stone += 2;
+        for x in (500 - self.deepest_stone - 5)..(500 + self.deepest_stone + 5) {
+            let pos = Position::new(x, self.deepest_stone);
+            self.grid.insert(pos, StoneOrSand::Stone);
+        }
+    }
+
     fn place_sand(&mut self) -> Result<Position, Position> {
         let mut pos = Position::new(500, 0);
+        if self.grid.contains_key(&pos) {
+            // sand source is blocked
+            return Err(pos);
+        }
         loop {
             match [DOWN, DOWN_LEFT, DOWN_RIGHT].iter().find_map(|&direction| {
                 let next_position = pos + direction;
@@ -101,19 +113,33 @@ impl Cave {
             }
         }
     }
+
+    fn get_sand_capacity(&mut self) -> u32 {
+        let mut sand_counter = 0;
+        while self.place_sand().is_ok() {
+            sand_counter += 1;
+        }
+        sand_counter
+    }
 }
 
 fn part1(input: &str) -> u32 {
     let mut cave = Cave::from_input(input);
-    let mut sand_counter = 0;
-    while cave.place_sand().is_ok() {
-        sand_counter += 1;
-    }
-    sand_counter
+    cave.get_sand_capacity()
+}
+
+fn part2(input: &str) -> u32 {
+    let mut cave = Cave::from_input(input);
+    cave.add_floor();
+    cave.get_sand_capacity()
 }
 
 pub fn solution1() -> u32 {
     part1(&get_input(2022, 14))
+}
+
+pub fn solution2() -> u32 {
+    part2(&get_input(2022, 14))
 }
 
 #[cfg(test)]
@@ -184,10 +210,12 @@ mod tests {
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 24);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 93);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 719);
+        assert_eq!(solution2(), 23390);
     }
 }
