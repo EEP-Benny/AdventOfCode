@@ -93,18 +93,57 @@ impl CaveSystem {
 
         covered_positions.len() as u32
     }
+
+    fn find_distress_beacon(&self, min: i32, max: i32) -> Option<Position> {
+        for y in min..=max {
+            let mut x = min;
+            'iterations: loop {
+                if x > max {
+                    break;
+                }
+                for sensor in &self.0 {
+                    let covered_positions = sensor.covered_positions_at_line(y);
+                    if covered_positions.contains(&x) {
+                        x = *covered_positions.end() + 1;
+                        continue 'iterations;
+                    }
+                }
+                // we found a place that wasn't covered
+                return Some(Position::new(x, y));
+            }
+        }
+        None
+    }
+
+    fn find_tuning_frequency(&self, range: RangeInclusive<i32>) -> u64 {
+        let beacon_position = self
+            .find_distress_beacon(*range.start(), *range.end())
+            .expect("There should be a distress beacon");
+
+        beacon_position.x as u64 * 4000000 + beacon_position.y as u64
+    }
 }
 
 fn part1(input: &str) -> u32 {
     CaveSystem::from_input(input).count_covered_positions_at_line(2000000)
 }
 
+fn part2(input: &str) -> u64 {
+    CaveSystem::from_input(input).find_tuning_frequency(0..=4000000)
+}
+
 pub fn solution1() -> u32 {
     part1(&get_input(2022, 15))
 }
 
+pub fn solution2() -> u64 {
+    part2(&get_input(2022, 15))
+}
+
 #[cfg(test)]
 mod tests {
+    use std::time::Instant;
+
     use super::*;
 
     const EXAMPLE_INPUT: &str = "
@@ -167,7 +206,31 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3
     }
 
     #[test]
+    fn test_find_distress_beacon() {
+        let cave_system = CaveSystem::from_input(EXAMPLE_INPUT.trim());
+        assert_eq!(
+            cave_system.find_distress_beacon(0, 20),
+            Some(Position::new(14, 11))
+        );
+    }
+
+    #[test]
+    fn test_find_tuning_frequency() {
+        let cave_system = CaveSystem::from_input(EXAMPLE_INPUT.trim());
+        assert_eq!(cave_system.find_tuning_frequency(0..=20), 56000011);
+    }
+
+    #[test]
     fn test_solutions() {
+        let start = Instant::now();
         assert_eq!(solution1(), 5125700);
+        let duration1 = start.elapsed();
+        assert_eq!(solution2(), 11379394658764);
+        let duration2 = start.elapsed() - duration1;
+        println!(
+            "Part 1 took {}ms, Part 2 took {}ms",
+            duration1.as_millis(),
+            duration2.as_millis(),
+        );
     }
 }
