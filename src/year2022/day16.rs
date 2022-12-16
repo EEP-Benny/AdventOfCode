@@ -11,13 +11,28 @@ use crate::utils::{get_input, Splittable};
 type ValveName = String;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
+struct ValveConnection {
+    length: u32,
+    next_valve_name: ValveName,
+}
+
+impl ValveConnection {
+    fn new(length: u32, next_valve_name: &str) -> Self {
+        Self {
+            length,
+            next_valve_name: next_valve_name.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
 struct Valve {
     flow_rate: u32,
-    next_valves: Vec<ValveName>,
+    next_valves: Vec<ValveConnection>,
 }
 
 impl Valve {
-    fn new(flow_rate: u32, next_valves: Vec<ValveName>) -> Self {
+    fn new(flow_rate: u32, next_valves: Vec<ValveConnection>) -> Self {
         Self {
             flow_rate,
             next_valves,
@@ -34,7 +49,8 @@ impl Valve {
         let captures = RE.captures(input)?;
         let valve_name = captures[1].to_string();
         let flow_rate = captures[2].parse().ok()?;
-        let next_valves = captures[3].split_to_strings(", ");
+        let next_valves =
+            captures[3].split_and_map(", ", |valve_name| ValveConnection::new(1, valve_name));
         Some((
             valve_name,
             Self {
@@ -46,6 +62,50 @@ impl Valve {
 }
 
 type ValveMap = HashMap<ValveName, Valve>;
+
+fn simplify_valve_map(valve_map: &mut ValveMap) {
+    let valve_names = valve_map.keys().map(String::clone).collect::<Vec<_>>();
+    for valve_name in valve_names.into_iter() {
+        let valve = valve_map.remove(&valve_name).unwrap();
+        if valve.flow_rate > 0 || valve.next_valves.len() != 2 {
+            valve_map.insert(valve_name, valve);
+        } else {
+            let left_connection = &valve.next_valves[0];
+            let right_connection = &valve.next_valves[1];
+            let left_valve_name = &left_connection.next_valve_name;
+            let right_valve_name = &right_connection.next_valve_name;
+            let connection_length = left_connection.length + right_connection.length;
+
+            println!(
+                "Removing valve {} between {} and {}",
+                valve_name, left_valve_name, right_valve_name
+            );
+
+            let next_valves_left = &mut valve_map.get_mut(left_valve_name).unwrap().next_valves;
+            next_valves_left.push(ValveConnection {
+                length: connection_length,
+                next_valve_name: right_valve_name.clone(),
+            });
+            next_valves_left.remove(
+                next_valves_left
+                    .iter()
+                    .position(|v| v.next_valve_name == valve_name)
+                    .unwrap(),
+            );
+            let next_valves_right = &mut valve_map.get_mut(right_valve_name).unwrap().next_valves;
+            next_valves_right.push(ValveConnection {
+                length: connection_length,
+                next_valve_name: left_valve_name.clone(),
+            });
+            next_valves_right.remove(
+                next_valves_right
+                    .iter()
+                    .position(|v| v.next_valve_name == valve_name)
+                    .unwrap(),
+            );
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 struct State {
@@ -106,11 +166,14 @@ impl State {
         }
     }
 
-    fn go_to_valve(&self, valve_name: &ValveName) -> Self {
+    fn go_to_valve(&self, valve_connection: &ValveConnection) -> Self {
         Self {
             last_valve: self.current_valve.clone(),
-            current_valve: valve_name.clone(),
-            minutes_remaining: self.minutes_remaining - 1,
+            current_valve: valve_connection.next_valve_name.clone(),
+            minutes_remaining: self
+                .minutes_remaining
+                .checked_sub(valve_connection.length)
+                .unwrap_or(0),
             remaining_valves: self.remaining_valves.clone(),
             remaining_pressure_per_minute_potential: self.remaining_pressure_per_minute_potential,
             pressure_relieve_by_opened_valves: self.pressure_relieve_by_opened_valves,
@@ -156,10 +219,10 @@ impl ExplorationState {
         if state.remaining_valves.contains(&state.current_valve) {
             self.states_to_explore_next.push(state.open_valve(valve));
         }
-        for valve_name in &valve.next_valves {
-            if valve_name != &state.last_valve {
+        for valve_connection in &valve.next_valves {
+            if valve_connection.next_valve_name != state.last_valve {
                 self.states_to_explore_next
-                    .push(state.go_to_valve(valve_name))
+                    .push(state.go_to_valve(valve_connection))
             }
         }
     }
@@ -195,7 +258,9 @@ fn parse_input(input: &str) -> ValveMap {
 }
 
 fn part1(input: &str) -> u32 {
-    ExplorationState::new(parse_input(input))
+    let mut valve_map = parse_input(input);
+    simplify_valve_map(&mut valve_map);
+    ExplorationState::new(valve_map)
         .find_maximum_pressure_relief()
         .expect("There should be a solution")
 }
@@ -239,12 +304,16 @@ Valve JJ has flow rate=21; tunnel leads to valve II
             valve_map.get(&"AA".to_string()),
             Some(&Valve::new(
                 0,
-                vec!["DD".to_string(), "II".to_string(), "BB".to_string()]
+                vec![
+                    ValveConnection::new(1, "DD"),
+                    ValveConnection::new(1, "II"),
+                    ValveConnection::new(1, "BB"),
+                ]
             ))
         );
         assert_eq!(
             valve_map.get(&"HH".to_string()),
-            Some(&Valve::new(22, vec!["GG".to_string(),]))
+            Some(&Valve::new(22, vec![ValveConnection::new(1, "GG"),]))
         );
     }
 
