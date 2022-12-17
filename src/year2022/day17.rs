@@ -1,6 +1,11 @@
 use crate::utils::get_input;
 use lazy_static::lazy_static;
-use std::{collections::HashSet, hash::Hash, iter::Cycle, ops::Add};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::Hash,
+    iter::{Cycle, Enumerate},
+    ops::Add,
+};
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Position {
@@ -112,8 +117,8 @@ lazy_static! {
 struct Cave<'a> {
     occupied_positions: HashSet<Position>,
     current_height: u32,
-    jet_direction_iterator: Cycle<std::vec::IntoIter<JetDirection>>,
-    rock_iterator: Cycle<std::slice::Iter<'a, Rock>>,
+    jet_direction_iterator: Cycle<Enumerate<std::vec::IntoIter<JetDirection>>>,
+    rock_iterator: Cycle<Enumerate<std::slice::Iter<'a, Rock>>>,
 }
 
 impl Cave<'_> {
@@ -121,8 +126,8 @@ impl Cave<'_> {
         Self {
             occupied_positions: HashSet::new(),
             current_height: 0,
-            jet_direction_iterator: parse_jet_directions(input).into_iter().cycle(),
-            rock_iterator: ROCKS.iter().cycle(),
+            jet_direction_iterator: parse_jet_directions(input).into_iter().enumerate().cycle(),
+            rock_iterator: ROCKS.iter().enumerate().cycle(),
         }
     }
 
@@ -151,13 +156,26 @@ impl Cave<'_> {
         true
     }
 
-    fn place_next_rock(&mut self) {
-        let rock = self.rock_iterator.next().unwrap();
+    fn get_row_as_string(&self, y: i32) -> String {
+        (1..=7)
+            .into_iter()
+            .map(|x| {
+                if self.occupied_positions.contains(&Position::new(x, y)) {
+                    '#'
+                } else {
+                    '.'
+                }
+            })
+            .collect()
+    }
+
+    fn place_next_rock(&mut self) -> (usize, usize, Position) {
+        let (rock_cycle_index, rock) = self.rock_iterator.next().unwrap();
         let mut position = Position::new(2, self.current_height as i32 + 3);
         // println!("Rock {rock:?} starts at position {position:?}");
         loop {
             // apply jet
-            let jet_direction = self.jet_direction_iterator.next().unwrap();
+            let (jet_cycle_index, jet_direction) = self.jet_direction_iterator.next().unwrap();
             let new_position = position
                 + match jet_direction {
                     JetDirection::Left => Position::new(-1, 0),
@@ -176,26 +194,71 @@ impl Cave<'_> {
             } else {
                 // println!("Placed rock at position {position:?}");
                 self.put_rock_at_position(rock, &position);
-                return;
+                return (rock_cycle_index, jet_cycle_index, position);
             }
         }
     }
-}
 
-fn part1(input: &str) -> u32 {
-    let mut cave = Cave::new(input);
-    for _ in 0..2022 {
-        cave.place_next_rock();
+    fn get_height_after_x_rocks(&mut self, desired_rock_count: usize) -> u64 {
+        let mut observed_landing_patterns = HashMap::new(); // maps (rock_index, jet_index, x, row_pattern) to (current_rock_count, y)
+
+        for current_rock_count in 1..=desired_rock_count {
+            let (rock_index, jet_index, landing_position) = self.place_next_rock();
+
+            if landing_position.y > 50 {
+                if let Some((previous_rock_index, previous_height)) = observed_landing_patterns
+                    .insert(
+                        (
+                            rock_index,
+                            jet_index,
+                            landing_position.x,
+                            self.get_row_as_string(landing_position.y - 50), // the current row might fill with later rocks, so look further down
+                        ),
+                        (current_rock_count, landing_position.y),
+                    )
+                {
+                    // Cycle detected!
+                    let rock_count_difference = current_rock_count - previous_rock_index;
+                    let height_difference = landing_position.y - previous_height;
+                    let remaining_cycles =
+                        (desired_rock_count - current_rock_count) / rock_count_difference;
+                    let remaining_rocks_after_cycles =
+                        (desired_rock_count - current_rock_count) % rock_count_difference;
+                    // println!("Cycle detected for rock {current_rock_count}: {rock_count_difference} rocks result in {height_difference} rows.");
+                    // println!("Remaining: {remaining_cycles} cycles plus {remaining_rocks_after_cycles} single rocks");
+                    // println!("|{}|", self.get_row_as_string(landing_position.y - 50));
+                    // println!("|{}|", self.get_row_as_string(previous_height - 50));
+                    for _ in 1..=remaining_rocks_after_cycles {
+                        self.place_next_rock();
+                    }
+                    return self.current_height as u64
+                        + remaining_cycles as u64 * height_difference as u64;
+                }
+            }
+        }
+        self.current_height as u64
     }
-    cave.current_height
 }
 
-pub fn solution1() -> u32 {
+fn part1(input: &str) -> u64 {
+    Cave::new(input).get_height_after_x_rocks(2022)
+}
+
+fn part2(input: &str) -> u64 {
+    Cave::new(input).get_height_after_x_rocks(1000000000000)
+}
+
+pub fn solution1() -> u64 {
     part1(&get_input(2022, 17))
+}
+
+pub fn solution2() -> u64 {
+    part2(&get_input(2022, 17))
 }
 
 #[cfg(test)]
 mod tests {
+    use std::time::Instant;
 
     use super::*;
 
@@ -235,10 +298,20 @@ mod tests {
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 3068);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 1514285714288);
     }
 
     #[test]
     fn test_solutions() {
+        let start = Instant::now();
         assert_eq!(solution1(), 3200);
+        let duration1 = start.elapsed();
+        assert_eq!(solution2(), 1584927536247);
+        let duration2 = start.elapsed() - duration1;
+        println!(
+            "Part 1 took {}ms, Part 2 took {}ms",
+            duration1.as_millis(),
+            duration2.as_millis(),
+        );
     }
 }
