@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::vec;
 
-type WorryLevel = u32;
+type WorryLevel = u64;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Operation {
@@ -16,7 +16,7 @@ enum Operation {
 struct Monkey {
     items: Vec<WorryLevel>,
     operation: Operation,
-    test_divisible_by: u32,
+    test_divisible_by: WorryLevel,
     throw_to_monkey_if_true: usize,
     throw_to_monkey_if_false: usize,
 }
@@ -30,7 +30,7 @@ impl Monkey {
             .unwrap();
         }
         let captures = RE.captures(input)?;
-        let items = captures[1].split_to_numbers(", ");
+        let items = captures[1].split_and_map(", ", |x| x.parse().unwrap());
         let operation = match (&captures[2], &captures[3]) {
             ("*", "old") => Some(Operation::Square),
             ("*", number_string) => Some(Operation::Mul(number_string.parse().ok()?)),
@@ -54,19 +54,23 @@ impl Monkey {
 
 struct WorryGame {
     monkeys: Vec<Monkey>,
-    inspection_counter: Vec<u32>,
+    inspection_counter: Vec<u64>,
+    greatest_common_test_divisor: WorryLevel,
     round_count: u32,
+    does_worry_level_drop: bool,
 }
 
 impl WorryGame {
-    fn from_input(input: &str) -> Self {
+    fn from_input(input: &str, does_worry_level_drop: bool) -> Self {
         let monkeys = input.split_and_map("\n\n", |monkey_string| {
             Monkey::from_string(monkey_string).expect("Should be a valid monkey")
         });
         Self {
             inspection_counter: vec![0; monkeys.len()],
+            greatest_common_test_divisor: monkeys.iter().map(|m| m.test_divisible_by).product(),
             monkeys,
             round_count: 0,
+            does_worry_level_drop,
         }
     }
 
@@ -80,7 +84,12 @@ impl WorryGame {
                     Operation::Add(number) => worry_level = worry_level + number,
                     Operation::Mul(number) => worry_level = worry_level * number,
                 }
-                worry_level = worry_level / 3;
+                if self.does_worry_level_drop {
+                    worry_level = worry_level / 3;
+                } else {
+                    // keep worry levels manageable
+                    worry_level = worry_level % self.greatest_common_test_divisor;
+                }
                 let target_monkey = if worry_level % self.monkeys[i].test_divisible_by == 0 {
                     self.monkeys[i].throw_to_monkey_if_true
                 } else {
@@ -104,7 +113,7 @@ impl WorryGame {
         self.monkeys.iter().map(|m| m.items.clone()).collect()
     }
 
-    fn get_monkey_business(&self) -> u32 {
+    fn get_monkey_business(&self) -> u64 {
         let mut most_inspections = 0;
         let mut second_most_inspections = 0;
         for &inspections in &self.inspection_counter {
@@ -119,14 +128,24 @@ impl WorryGame {
     }
 }
 
-fn part1(input: &str) -> u32 {
-    WorryGame::from_input(input)
+fn part1(input: &str) -> u64 {
+    WorryGame::from_input(input, true)
         .play_until_round(20)
         .get_monkey_business()
 }
 
-pub fn solution1() -> u32 {
+fn part2(input: &str) -> u64 {
+    WorryGame::from_input(input, false)
+        .play_until_round(10000)
+        .get_monkey_business()
+}
+
+pub fn solution1() -> u64 {
     part1(&get_input(2022, 11))
+}
+
+pub fn solution2() -> u64 {
+    part2(&get_input(2022, 11))
 }
 
 #[cfg(test)]
@@ -186,7 +205,7 @@ Monkey 3:
 
     #[test]
     fn test_play_round() {
-        let mut game = WorryGame::from_input(EXAMPLE_INPUT.trim());
+        let mut game = WorryGame::from_input(EXAMPLE_INPUT.trim(), true);
 
         game.play_round();
         assert_eq!(
@@ -226,10 +245,12 @@ Monkey 3:
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 10605);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 2713310158);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 62491);
+        assert_eq!(solution2(), 17408399184);
     }
 }
