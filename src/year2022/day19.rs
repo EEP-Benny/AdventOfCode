@@ -89,11 +89,8 @@ impl Blueprint {
         })
     }
 
-    fn find_maximum_number_of_geodes(&self) -> u32 {
-        println!(
-            "Finding maximum number of geodes for blueprint {}...",
-            self.blueprint_number
-        );
+    fn find_maximum_number_of_geodes(&self, minutes: u32) -> u32 {
+        // println!("Finding maximum number of geodes for blueprint {}...", self.blueprint_number);
         let mut already_explored_states = HashSet::<State>::new();
         let mut states_to_explore_next = BinaryHeap::from([State {
             amount_of_ore: 0,
@@ -104,10 +101,11 @@ impl Blueprint {
             number_of_clay_robots: 0,
             number_of_obsidian_robots: 0,
             number_of_geode_robots: 0,
-            minutes_remaining: 24,
+            minutes_remaining: minutes,
         }]);
         while let Some(state) = states_to_explore_next.pop() {
             if state.minutes_remaining <= 0 {
+                // println!("Found maximum after looking at {} states", already_explored_states.len());
                 return state.amount_of_geode;
             }
             if already_explored_states.contains(&state) {
@@ -165,8 +163,8 @@ impl Blueprint {
         panic!("Emptied the heap before reaching 0 minutes");
     }
 
-    fn get_quality_level(&self) -> u32 {
-        self.blueprint_number * self.find_maximum_number_of_geodes()
+    fn get_quality_level(&self, minutes:u32) -> u32 {
+        self.blueprint_number * self.find_maximum_number_of_geodes(minutes)
     }
 }
 
@@ -174,12 +172,17 @@ fn part1(input: &str) -> u32 {
     input
         .lines()
         .filter_map(Blueprint::from_string)
-        .map(|blueprint| blueprint.get_quality_level())
+        .map(|blueprint| blueprint.get_quality_level(24))
         .sum()
 }
 
 fn part2(input: &str) -> u32 {
-    0
+    input
+        .lines().take(3)
+        .filter_map(Blueprint::from_string)
+        .map(|blueprint| blueprint.find_maximum_number_of_geodes(32))
+        .product()
+
 }
 
 pub fn solution1() -> u32 {
@@ -193,6 +196,8 @@ pub fn solution2() -> u32 {
 #[cfg(test)]
 mod tests {
 
+    use std::time::Instant;
+
     use super::*;
 
     const EXAMPLE_INPUT: &str = "
@@ -203,18 +208,27 @@ Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsid
     #[test]
     fn test_find_maximum_number_of_geodes() {
         let blueprint = Blueprint::from_string("Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.").unwrap();
-        assert_eq!(blueprint.find_maximum_number_of_geodes(), 9);
+        assert_eq!(blueprint.find_maximum_number_of_geodes(24), 9);
+        assert_eq!(blueprint.find_maximum_number_of_geodes(32), 56);
     }
 
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 33);
-        assert_eq!(part2(EXAMPLE_INPUT.trim()), 0);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 56 * 62);
     }
 
     #[test]
     fn test_solutions() {
+        let start = Instant::now();
         assert_eq!(solution1(), 1382);
-        assert_eq!(solution2(), 0);
+        let duration1 = start.elapsed();
+        assert_eq!(solution2(), 31740);
+        let duration2 = start.elapsed() - duration1;
+        println!(
+            "Part 1 took {}ms, Part 2 took {}ms",
+            duration1.as_millis(),
+            duration2.as_millis(),
+        );
     }
 }
