@@ -1,4 +1,8 @@
-use std::{collections::HashSet, hash::Hash};
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashSet},
+    hash::Hash,
+};
 
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -22,37 +26,32 @@ struct State {
     number_of_clay_robots: u32,
     number_of_obsidian_robots: u32,
     number_of_geode_robots: u32,
+    minutes_remaining: u32,
+}
+
+impl State {
+    fn get_score(&self) -> u32 {
+        // geode we already have
+        self.amount_of_geode 
+            // geode we can mine with the robots we have
+            + self.minutes_remaining * self.number_of_geode_robots 
+            // geode we could mine with robots we could build if we have enough materials
+            + (self.minutes_remaining * self.minutes_remaining - self.minutes_remaining) / 2
+    }
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.get_score().cmp(&other.get_score())
+    }
 }
 
 impl PartialOrd for State {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        if self == other {
-            Some(std::cmp::Ordering::Equal)
-        } else if self.amount_of_ore < other.amount_of_ore
-            && self.amount_of_clay < other.amount_of_clay
-            && self.amount_of_obsidian < other.amount_of_obsidian
-            && self.amount_of_geode < other.amount_of_geode
-            && self.number_of_ore_robots < other.number_of_ore_robots
-            && self.number_of_clay_robots < other.number_of_clay_robots
-            && self.number_of_obsidian_robots < other.number_of_obsidian_robots
-            && self.number_of_geode_robots < other.number_of_geode_robots
-        {
-            Some(std::cmp::Ordering::Less)
-        } else if self.amount_of_ore > other.amount_of_ore
-            && self.amount_of_clay > other.amount_of_clay
-            && self.amount_of_obsidian > other.amount_of_obsidian
-            && self.amount_of_geode > other.amount_of_geode
-            && self.number_of_ore_robots > other.number_of_ore_robots
-            && self.number_of_clay_robots > other.number_of_clay_robots
-            && self.number_of_obsidian_robots > other.number_of_obsidian_robots
-            && self.number_of_geode_robots > other.number_of_geode_robots
-        {
-            Some(std::cmp::Ordering::Greater)
-        } else {
-            None
-        }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
+
 
 #[derive(Debug, PartialEq)]
 struct Blueprint {
@@ -95,7 +94,8 @@ impl Blueprint {
             "Finding maximum number of geodes for blueprint {}...",
             self.blueprint_number
         );
-        let mut states_to_consider = HashSet::from([State {
+        let mut already_explored_states = HashSet::<State>::new();
+        let mut states_to_explore_next = BinaryHeap::from([State {
             amount_of_ore: 0,
             amount_of_clay: 0,
             amount_of_obsidian: 0,
@@ -104,76 +104,65 @@ impl Blueprint {
             number_of_clay_robots: 0,
             number_of_obsidian_robots: 0,
             number_of_geode_robots: 0,
+            minutes_remaining: 24,
         }]);
-        for minute in 1..=24 {
-            let mut states_to_consider_next = HashSet::<State>::new();
-            for state in states_to_consider {
-                for robot_type in [
-                    RobotType::OreRobot,
-                    RobotType::ClayRobot,
-                    RobotType::ObsidianRobot,
-                    RobotType::GeodeRobot,
-                ] {
-                    let mut next_state = state.clone();
-                    match robot_type {
-                        RobotType::OreRobot => {
-                            if state.amount_of_ore >= self.ore_per_ore_robot {
-                                next_state.amount_of_ore -= self.ore_per_ore_robot;
-                                next_state.number_of_ore_robots += 1;
-                            }
-                        }
-                        RobotType::ClayRobot => {
-                            if state.amount_of_ore >= self.ore_per_clay_robot {
-                                next_state.amount_of_ore -= self.ore_per_clay_robot;
-                                next_state.number_of_clay_robots += 1;
-                            }
-                        }
-                        RobotType::ObsidianRobot => {
-                            if state.amount_of_ore >= self.ore_per_obsidian_robot
-                                && state.amount_of_clay >= self.clay_per_obsidian_robot
-                            {
-                                next_state.amount_of_ore -= self.ore_per_obsidian_robot;
-                                next_state.amount_of_clay -= self.clay_per_obsidian_robot;
-                                next_state.number_of_obsidian_robots += 1;
-                            }
-                        }
-                        RobotType::GeodeRobot => {
-                            if state.amount_of_ore >= self.ore_per_geode_robot
-                                && state.amount_of_obsidian >= self.obsidian_per_geode_robot
-                            {
-                                next_state.amount_of_ore -= self.ore_per_geode_robot;
-                                next_state.amount_of_obsidian -= self.obsidian_per_geode_robot;
-                                next_state.number_of_geode_robots += 1;
-                            }
+        while let Some(state) = states_to_explore_next.pop() {
+            if state.minutes_remaining <= 0 {
+                return state.amount_of_geode;
+            }
+            if already_explored_states.contains(&state) {
+                continue;
+            }
+            for robot_type in [
+                RobotType::OreRobot,
+                RobotType::ClayRobot,
+                RobotType::ObsidianRobot,
+                RobotType::GeodeRobot,
+            ] {
+                let mut next_state = state.clone();
+                match robot_type {
+                    RobotType::OreRobot => {
+                        if state.amount_of_ore >= self.ore_per_ore_robot {
+                            next_state.amount_of_ore -= self.ore_per_ore_robot;
+                            next_state.number_of_ore_robots += 1;
                         }
                     }
-                    next_state.amount_of_ore += state.number_of_ore_robots;
-                    next_state.amount_of_clay += state.number_of_clay_robots;
-                    next_state.amount_of_obsidian += state.number_of_obsidian_robots;
-                    next_state.amount_of_geode += state.number_of_geode_robots;
-
-                    states_to_consider_next.insert(next_state);
+                    RobotType::ClayRobot => {
+                        if state.amount_of_ore >= self.ore_per_clay_robot {
+                            next_state.amount_of_ore -= self.ore_per_clay_robot;
+                            next_state.number_of_clay_robots += 1;
+                        }
+                    }
+                    RobotType::ObsidianRobot => {
+                        if state.amount_of_ore >= self.ore_per_obsidian_robot
+                            && state.amount_of_clay >= self.clay_per_obsidian_robot
+                        {
+                            next_state.amount_of_ore -= self.ore_per_obsidian_robot;
+                            next_state.amount_of_clay -= self.clay_per_obsidian_robot;
+                            next_state.number_of_obsidian_robots += 1;
+                        }
+                    }
+                    RobotType::GeodeRobot => {
+                        if state.amount_of_ore >= self.ore_per_geode_robot
+                            && state.amount_of_obsidian >= self.obsidian_per_geode_robot
+                        {
+                            next_state.amount_of_ore -= self.ore_per_geode_robot;
+                            next_state.amount_of_obsidian -= self.obsidian_per_geode_robot;
+                            next_state.number_of_geode_robots += 1;
+                        }
+                    }
                 }
+                next_state.amount_of_ore += state.number_of_ore_robots;
+                next_state.amount_of_clay += state.number_of_clay_robots;
+                next_state.amount_of_obsidian += state.number_of_obsidian_robots;
+                next_state.amount_of_geode += state.number_of_geode_robots;
+                next_state.minutes_remaining -= 1;
+
+                states_to_explore_next.push(next_state);
             }
-            states_to_consider = states_to_consider_next;
-            println!(
-                "After minute {minute}: {} states to consider",
-                states_to_consider.len(),
-            );
-            // states_to_consider = states_to_consider_next.clone();
-            // states_to_consider
-            //     .retain(|state| !states_to_consider_next.iter().any(|other| state < other));
-            // println!(
-            //     "After minute {minute}: {}/{} states to consider",
-            //     states_to_consider.len(),
-            //     states_to_consider_next.len()
-            // );
+            already_explored_states.insert(state);
         }
-        states_to_consider
-            .iter()
-            .map(|state| state.amount_of_geode)
-            .max()
-            .unwrap()
+        panic!("Emptied the heap before reaching 0 minutes");
     }
 
     fn get_quality_level(&self) -> u32 {
@@ -225,7 +214,7 @@ Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsid
 
     #[test]
     fn test_solutions() {
-        assert_eq!(solution1(), 0);
+        assert_eq!(solution1(), 1382);
         assert_eq!(solution2(), 0);
     }
 }
