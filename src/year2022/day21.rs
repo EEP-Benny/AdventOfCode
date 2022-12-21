@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use crate::utils::get_input;
 
 type MonkeyName = String;
-type MonkeyNumber = u64;
+type MonkeyNumber = i64;
 
 #[derive(Debug, PartialEq)]
 enum Monkey {
@@ -56,6 +56,26 @@ impl Monkeys {
         }
     }
 
+    fn get_root_monkeys(&self) -> (MonkeyName, MonkeyName) {
+        let (left_monkey, right_monkey) = match self
+            .monkeys
+            .get("root")
+            .expect("root monkey should always exist")
+        {
+            Monkey::Number(_) => panic!("root monkey should depend on two other monkeys"),
+            Monkey::Add(left, right) => (left, right),
+            Monkey::Sub(left, right) => (left, right),
+            Monkey::Mul(left, right) => (left, right),
+            Monkey::Div(left, right) => (left, right),
+        };
+        (left_monkey.clone(), right_monkey.clone())
+    }
+
+    fn set_human_number(&mut self, number: MonkeyNumber) {
+        self.monkeys
+            .insert("humn".to_string(), Monkey::Number(number));
+    }
+
     fn evaluate_monkey(&self, monkey_name: &MonkeyName) -> MonkeyNumber {
         let monkey = self
             .monkeys
@@ -75,23 +95,49 @@ fn part1(input: &str) -> MonkeyNumber {
     Monkeys::from_input(input).evaluate_monkey(&"root".to_string())
 }
 
-fn part2(input: &str) -> u32 {
-    0
+fn part2(input: &str) -> MonkeyNumber {
+    let mut monkeys = Monkeys::from_input(input);
+    let (left_monkey, right_monkey) = monkeys.get_root_monkeys();
+    let right_result = monkeys.evaluate_monkey(&right_monkey);
+
+    monkeys.set_human_number(0);
+    let left_result_low = monkeys.evaluate_monkey(&left_monkey);
+
+    let high_guess = 1_000_000_000_000;
+    monkeys.set_human_number(high_guess);
+    let left_result_high = monkeys.evaluate_monkey(&left_monkey);
+
+    // calculate in floating point to avoid integer overflow during multiplication
+    let estimated_solution = (high_guess as f64 * (right_result - left_result_low) as f64
+        / (left_result_high - left_result_low) as f64) as MonkeyNumber;
+
+    // println!("Estimate: {estimated_solution}");
+
+    for potential_solution in estimated_solution - 10..estimated_solution + 10 {
+        monkeys
+            .monkeys
+            .insert("humn".to_string(), Monkey::Number(potential_solution));
+
+        let left_result = monkeys.evaluate_monkey(&left_monkey);
+        let right_result = monkeys.evaluate_monkey(&right_monkey);
+        if left_result == right_result {
+            return potential_solution as MonkeyNumber;
+        }
+        // println!("{left_result} != {right_result}");
+    }
+    panic!("Didn't find a result near the estimated solution {estimated_solution}");
 }
 
 pub fn solution1() -> MonkeyNumber {
     part1(&get_input(2022, 21))
 }
 
-pub fn solution2() -> u32 {
+pub fn solution2() -> MonkeyNumber {
     part2(&get_input(2022, 21))
 }
 
 #[cfg(test)]
 mod tests {
-
-    use std::time::Instant;
-
     use super::*;
 
     const EXAMPLE_INPUT: &str = "
@@ -160,20 +206,12 @@ hmdt: 32
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 152);
-        assert_eq!(part2(EXAMPLE_INPUT.trim()), 0);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 301);
     }
 
     #[test]
     fn test_solutions() {
-        let start = Instant::now();
         assert_eq!(solution1(), 38914458159166);
-        let duration1 = start.elapsed();
-        assert_eq!(solution2(), 0);
-        let duration2 = start.elapsed() - duration1;
-        println!(
-            "Part 1 took {}ms, Part 2 took {}ms",
-            duration1.as_millis(),
-            duration2.as_millis(),
-        );
+        assert_eq!(solution2(), 3665520865940);
     }
 }
