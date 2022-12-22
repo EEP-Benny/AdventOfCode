@@ -4,7 +4,7 @@ pub fn get_input(year: u32, day: u32) -> String {
     let filename = format!("src/year{year:04}/day{day:02}.input.txt");
     fs::read_to_string(&filename)
         .expect(&format!("Input file {filename} should be present"))
-        .trim()
+        .trim_matches('\n')
         .to_string()
 }
 
