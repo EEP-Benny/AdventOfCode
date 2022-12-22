@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::utils::get_input;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 enum Facing {
     Right = 0,
     Down = 1,
@@ -85,27 +85,23 @@ impl Board {
         position
     }
 
-    fn get_potential_neighbor(
-        &self,
-        current_position: &Position,
-        facing: &Facing,
-    ) -> Option<Position> {
-        let mut candidate_position = match facing {
+    fn get_potential_neighbor(&self, position: &Position, facing: &Facing) -> Option<Position> {
+        let candidate_position = match facing {
             Facing::Right => Position {
-                x: current_position.x + 1,
-                y: current_position.y,
+                x: position.x + 1,
+                y: position.y,
             },
             Facing::Down => Position {
-                x: current_position.x,
-                y: current_position.y + 1,
+                x: position.x,
+                y: position.y + 1,
             },
             Facing::Left => Position {
-                x: current_position.x - 1,
-                y: current_position.y,
+                x: position.x - 1,
+                y: position.y,
             },
             Facing::Up => Position {
-                x: current_position.x,
-                y: current_position.y - 1,
+                x: position.x,
+                y: position.y - 1,
             },
         };
         if self.0.contains_key(&candidate_position) {
@@ -117,19 +113,77 @@ impl Board {
 
     fn get_neighbor_with_wraparound(
         &self,
-        current_position: &Position,
+        position: &Position,
         facing: &Facing,
-    ) -> Position {
-        self.get_potential_neighbor(&current_position, facing)
+    ) -> (Position, Facing) {
+        self.get_potential_neighbor(&position, facing)
+            .map(|position| (position, *facing))
             .unwrap_or_else(|| {
-                let mut candidate_position = current_position.clone();
+                let mut candidate_position = position.clone();
                 let opposite_facing = facing.clockwise().clockwise();
                 loop {
                     match self.get_potential_neighbor(&candidate_position, &opposite_facing) {
                         Some(new_position) => candidate_position = new_position,
-                        None => return candidate_position,
+                        None => return (candidate_position, *facing),
                     }
                 }
+            })
+    }
+
+    fn get_neighbor_on_cube(&self, position: &Position, facing: &Facing) -> (Position, Facing) {
+        self.get_potential_neighbor(&position, facing)
+            .map(|position| (position, *facing))
+            .unwrap_or_else(|| {
+                // walk around the edge
+                let mut current_position = *position;
+                let mut current_facing = facing.clockwise();
+                let mut stack = Vec::<bool>::new(); // whether there was a outer corner at this point along the edge
+                loop {
+                    // println!(
+                    //     "at {current_position:?}, facing {current_facing:?}, {} entries on stack",
+                    //     stack.len()
+                    // );
+                    if let Some(_) = self
+                        .get_potential_neighbor(&current_position, &current_facing.anticlockwise())
+                    {
+                        // found a left turn / inner corner
+                        current_facing = current_facing.anticlockwise();
+                        break; // now tracking back
+                    } else if let Some(position) =
+                        self.get_potential_neighbor(&current_position, &current_facing)
+                    {
+                        // straight edge
+                        current_position = position;
+                        stack.push(false);
+                    } else {
+                        // found a right turn / outer corner
+                        current_facing = current_facing.clockwise();
+                        stack.push(true);
+                    }
+                }
+                while let Some(stack_entry) = stack.pop() {
+                    // println!(
+                    //     "at {current_position:?}, facing {current_facing:?}, {} entries on stack",
+                    //     stack.len()
+                    // );
+
+                    if let Some(position) =
+                        self.get_potential_neighbor(&current_position, &current_facing)
+                    {
+                        // straight edge
+                        current_position = position;
+                    } else {
+                        // found a right turn / outer corner
+                        if !stack_entry {
+                            current_facing = current_facing.clockwise();
+                        } else {
+                            // two outer corners meet -> calculate detour
+                            (current_position, current_facing) =
+                                self.get_neighbor_on_cube(&current_position, &current_facing);
+                        }
+                    }
+                }
+                (current_position, current_facing.clockwise())
             })
     }
 }
@@ -154,17 +208,22 @@ fn parse_input(input: &str) -> (Board, Vec<Instruction>) {
     )
 }
 
-fn execute_instructions(board: &Board, instructions: &Vec<Instruction>) -> (Position, Facing) {
+fn execute_instructions(
+    board: &Board,
+    instructions: &Vec<Instruction>,
+    neighbor_fn: fn(&Board, &Position, &Facing) -> (Position, Facing),
+) -> (Position, Facing) {
     let mut current_position = board.get_starting_position();
     let mut current_facing = Facing::Right;
     for instruction in instructions {
         match instruction {
             Instruction::GoForward(amount) => {
                 for _ in 1..=*amount {
-                    let new_position =
-                        board.get_neighbor_with_wraparound(&current_position, &current_facing);
+                    let (new_position, new_facing) =
+                        neighbor_fn(board, &current_position, &current_facing);
                     if board.0.get(&new_position) == Some(&Tile::Open) {
                         current_position = new_position;
+                        current_facing = new_facing;
                     } else {
                         break; // we reached a wall
                     }
@@ -183,12 +242,16 @@ fn get_passwort(position: Position, facing: Facing) -> u32 {
 
 fn part1(input: &str) -> u32 {
     let (board, instructions) = parse_input(input);
-    let (final_position, final_facing) = execute_instructions(&board, &instructions);
+    let (final_position, final_facing) =
+        execute_instructions(&board, &instructions, Board::get_neighbor_with_wraparound);
     get_passwort(final_position, final_facing)
 }
 
 fn part2(input: &str) -> u32 {
-    0
+    let (board, instructions) = parse_input(input);
+    let (final_position, final_facing) =
+        execute_instructions(&board, &instructions, Board::get_neighbor_on_cube);
+    get_passwort(final_position, final_facing)
 }
 
 pub fn solution1() -> u32 {
@@ -233,12 +296,45 @@ mod tests {
 
         assert_eq!(
             board.get_neighbor_with_wraparound(&Position { x: 12, y: 7 }, &Facing::Right),
-            Position { x: 1, y: 7 }
+            (Position { x: 1, y: 7 }, Facing::Right)
         );
 
         assert_eq!(
             board.get_neighbor_with_wraparound(&Position { x: 6, y: 8 }, &Facing::Down),
-            Position { x: 6, y: 5 }
+            (Position { x: 6, y: 5 }, Facing::Right)
+        );
+    }
+
+    #[test]
+    fn test_wraparound_cube() {
+        let (board, _) = parse_input(EXAMPLE_INPUT.trim_matches('\n'));
+
+        // example: A -> B
+        assert_eq!(
+            board.get_neighbor_on_cube(&Position { x: 12, y: 6 }, &Facing::Right),
+            (Position { x: 15, y: 9 }, Facing::Down)
+        );
+
+        assert_eq!(
+            board.get_neighbor_on_cube(&Position { x: 12, y: 5 }, &Facing::Right),
+            (Position { x: 16, y: 9 }, Facing::Down)
+        );
+
+        assert_eq!(
+            board.get_neighbor_on_cube(&Position { x: 12, y: 4 }, &Facing::Right),
+            (Position { x: 16, y: 9 }, Facing::Left)
+        );
+
+        // example: C -> D
+        assert_eq!(
+            board.get_neighbor_on_cube(&Position { x: 11, y: 12 }, &Facing::Down),
+            (Position { x: 2, y: 8 }, Facing::Up)
+        );
+
+        // example: D -> C
+        assert_eq!(
+            board.get_neighbor_on_cube(&Position { x: 2, y: 8 }, &Facing::Down),
+            (Position { x: 11, y: 12 }, Facing::Up)
         );
     }
 
@@ -266,12 +362,12 @@ mod tests {
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim_matches('\n')), 6032);
-        assert_eq!(part2(EXAMPLE_INPUT.trim_matches('\n')), 0);
+        assert_eq!(part2(EXAMPLE_INPUT.trim_matches('\n')), 5031);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 43466);
-        assert_eq!(solution2(), 0);
+        assert_eq!(solution2(), 162155);
     }
 }
