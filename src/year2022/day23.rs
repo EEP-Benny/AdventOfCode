@@ -45,6 +45,7 @@ impl Position {
     }
 }
 
+#[derive(Debug)]
 struct BoundingBox {
     min_x: i32,
     max_x: i32,
@@ -238,6 +239,7 @@ fn part1(input: &str) -> u32 {
 fn part2(input: &str) -> u32 {
     let mut simulation = Simulation::from_input(input);
     simulation.simulate_until_nothing_moves_anymore();
+    println!("BB: {:?}", simulation.get_bounding_box());
     simulation.current_round
 }
 
@@ -348,5 +350,69 @@ mod tests {
     fn test_solutions() {
         assert_eq!(solution1(), 3987);
         assert_eq!(solution2(), 938);
+    }
+}
+
+mod viz {
+    use gif::{Encoder, Frame, Repeat};
+    use std::borrow::Cow;
+    use std::fs::File;
+
+    use super::*;
+
+    fn setup_encoder<'a>(bb: &BoundingBox, image: &'a mut File) -> Encoder<&'a mut File> {
+        let color_map = &[0xCC, 0xCC, 0xCC, 0xFF, 0, 0];
+        let width = (bb.max_x - bb.min_x + 1) as u16;
+        let height = (bb.max_y - bb.min_y + 1) as u16;
+
+        let mut encoder = Encoder::new(image, width, height, color_map).unwrap();
+        encoder.set_repeat(Repeat::Infinite).unwrap();
+
+        encoder
+    }
+
+    fn write_frame(encoder: &mut Encoder<&mut File>, simulation: &Simulation, bb: &BoundingBox) {
+        let width = (bb.max_x - bb.min_x + 1) as u16;
+        let height = (bb.max_y - bb.min_y + 1) as u16;
+
+        let color_indices: Vec<u8> = (bb.min_y..=bb.max_y)
+            .map(|y| {
+                (bb.min_x..=bb.max_x).map(move |x| {
+                    if simulation.elf_positions_as_set.contains(&Position { x, y }) {
+                        1
+                    } else {
+                        0
+                    }
+                })
+            })
+            .flatten()
+            .collect();
+
+        let mut frame = Frame::default();
+        frame.width = width;
+        frame.height = height;
+        frame.delay = 5; // measured in 1/100th of a second for some reason
+        frame.buffer = Cow::Borrowed(&color_indices);
+        encoder.write_frame(&frame).unwrap();
+    }
+
+    #[test]
+    fn main() {
+        let bb = BoundingBox::new(-20, 130, -20, 130);
+
+        let mut simulation = Simulation::from_input(&get_input(2022, 23));
+        let mut image = File::create("src/year2022/day23.gif").unwrap();
+        let mut encoder = setup_encoder(&bb, &mut image);
+
+        write_frame(&mut encoder, &simulation, &bb);
+
+        while simulation.simulate_step() {
+            write_frame(&mut encoder, &simulation, &bb);
+        }
+        let mut frame = Frame::default();
+        frame.width = 1;
+        frame.height = 1;
+        frame.delay = 500; // wait 5 s before starting again
+        encoder.write_frame(&frame).unwrap();
     }
 }
