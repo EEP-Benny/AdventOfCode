@@ -21,6 +21,7 @@ mod year2022 {
     pub mod day19;
     pub mod day21;
     pub mod day22;
+    pub mod day23;
 }
 
 fn main() {}
