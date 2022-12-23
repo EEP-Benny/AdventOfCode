@@ -179,6 +179,9 @@ impl Simulation {
             self.simulate_step();
         }
     }
+    fn simulate_until_nothing_moves_anymore(&mut self) {
+        while self.simulate_step() {}
+    }
 
     fn has_any_elves_in_direction(&self, pos: &Position, directions: &[Direction]) -> bool {
         directions
@@ -233,7 +236,9 @@ fn part1(input: &str) -> u32 {
 }
 
 fn part2(input: &str) -> u32 {
-    0
+    let mut simulation = Simulation::from_input(input);
+    simulation.simulate_until_nothing_moves_anymore();
+    simulation.current_round
 }
 
 pub fn solution1() -> u32 {
@@ -336,12 +341,12 @@ mod tests {
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 110);
-        assert_eq!(part2(EXAMPLE_INPUT.trim()), 0);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 20);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 3987);
-        assert_eq!(solution2(), 0);
+        assert_eq!(solution2(), 938);
     }
 }
