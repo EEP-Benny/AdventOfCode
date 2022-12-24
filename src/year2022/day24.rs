@@ -51,7 +51,8 @@ impl Blizzard {
 struct Valley {
     blizzard_list: Vec<Blizzard>,
     potential_expedition_positions: HashSet<Position>,
-    exit_position: Position,
+    start_position: Position,
+    target_position: Position,
     bottom_right_corner: Position,
     minutes_since_start: u32,
 }
@@ -59,7 +60,7 @@ struct Valley {
 impl Valley {
     fn from_input(input: &str) -> Self {
         let mut blizzard_list = Vec::new();
-        let mut exit_position = Position::new(0, 0);
+        let mut target_position = Position::new(0, 0);
         let mut bottom_right_corner = Position::new(0, 0);
         for (line, y) in input.lines().zip(0..) {
             for (char, x) in line.chars().zip(0..) {
@@ -68,16 +69,18 @@ impl Valley {
                     '>' => blizzard_list.push(Blizzard::new(Position::new(x, y), Right)),
                     'v' => blizzard_list.push(Blizzard::new(Position::new(x, y), Down)),
                     '<' => blizzard_list.push(Blizzard::new(Position::new(x, y), Left)),
-                    '.' => exit_position = Position::new(x, y), // exit is the last . in the input
+                    '.' => target_position = Position::new(x, y), // target is the last . in the input
                     '#' => bottom_right_corner = Position::new(x, y), // bottom right corner will be processed last
                     _ => panic!("unexpected symbol {char}"),
                 }
             }
         }
+        let start_position = Position::new(1, 0);
         Self {
             blizzard_list,
-            potential_expedition_positions: HashSet::from([Position::new(1, 0)]),
-            exit_position,
+            potential_expedition_positions: HashSet::from([start_position]),
+            start_position,
+            target_position,
             bottom_right_corner,
             minutes_since_start: 0,
         }
@@ -117,7 +120,7 @@ impl Valley {
                 ]
             })
             .filter(|pos| {
-                pos == &self.exit_position
+                (pos == &self.target_position || pos == &self.start_position)
                     || !blizzard_positions.contains(pos)
                         && (pos.x > 0 && pos.x < self.bottom_right_corner.x)
                         && (pos.y > 0 && pos.y < self.bottom_right_corner.y)
@@ -132,23 +135,43 @@ impl Valley {
         // );
     }
 
-    fn get_minutes_until_exit(&mut self) -> u32 {
+    fn get_minutes_until_target(&mut self) -> u32 {
         while !self
             .potential_expedition_positions
-            .contains(&self.exit_position)
+            .contains(&self.target_position)
         {
             self.simulate_step();
+            if self.potential_expedition_positions.is_empty() {
+                panic!("no more positions to explore");
+            }
         }
         self.minutes_since_start
     }
 }
 
 fn part1(input: &str) -> u32 {
-    Valley::from_input(input).get_minutes_until_exit()
+    Valley::from_input(input).get_minutes_until_target()
 }
 
 fn part2(input: &str) -> u32 {
-    0
+    let mut valley = Valley::from_input(input);
+    let start = valley.start_position;
+    let target = valley.target_position;
+
+    // go to exit
+    valley.get_minutes_until_target();
+
+    // go back to start
+    valley.start_position = target;
+    valley.target_position = start;
+    valley.potential_expedition_positions = HashSet::from([target]);
+    valley.get_minutes_until_target();
+
+    // and to the exit again
+    valley.start_position = start;
+    valley.target_position = target;
+    valley.potential_expedition_positions = HashSet::from([start]);
+    valley.get_minutes_until_target()
 }
 
 pub fn solution1() -> u32 {
@@ -192,7 +215,8 @@ mod tests {
                     Blizzard::new(Position::new(4, 4), Down),
                 ],
                 potential_expedition_positions: HashSet::from([Position::new(1, 0)]),
-                exit_position: Position::new(5, 6),
+                start_position: Position::new(1, 0),
+                target_position: Position::new(5, 6),
                 bottom_right_corner: Position::new(6, 6),
                 minutes_since_start: 0,
             }
@@ -222,7 +246,8 @@ mod tests {
                     Blizzard::new(Position::new(6, 4), Right),
                 ],
                 potential_expedition_positions: HashSet::from([Position::new(1, 0)]),
-                exit_position: Position::new(6, 5),
+                start_position: Position::new(1, 0),
+                target_position: Position::new(6, 5),
                 bottom_right_corner: Position::new(7, 5),
                 minutes_since_start: 0,
             }
@@ -348,12 +373,12 @@ mod tests {
     #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT_COMPLEX.trim()), 18);
-        assert_eq!(part2(EXAMPLE_INPUT_COMPLEX.trim()), 0);
+        assert_eq!(part2(EXAMPLE_INPUT_COMPLEX.trim()), 54);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(solution1(), 292);
-        assert_eq!(solution2(), 0);
+        assert_eq!(solution2(), 816);
     }
 }
