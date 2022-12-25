@@ -2,13 +2,13 @@ use crate::utils::get_input;
 
 #[derive(Debug, PartialEq)]
 struct Node {
-    value: i32,
+    value: i64,
     left_index: usize,
     right_index: usize,
 }
 
 impl Node {
-    fn new(value: i32, left_index: usize, right_index: usize) -> Self {
+    fn new(value: i64, left_index: usize, right_index: usize) -> Self {
         Self {
             value,
             left_index,
@@ -24,8 +24,11 @@ struct List {
 }
 
 impl List {
-    fn from_input(input: &str) -> Self {
-        let numbers: Vec<i32> = input.lines().map(|line| line.parse().unwrap()).collect();
+    fn from_input(input: &str, decryption_key: i64) -> Self {
+        let numbers: Vec<i64> = input
+            .lines()
+            .map(|line| line.parse::<i64>().unwrap() * decryption_key)
+            .collect();
         let len = numbers.len();
         let nodes = numbers
             .iter()
@@ -39,11 +42,11 @@ impl List {
         Self { nodes, len }
     }
 
-    fn value_at(&self, index: usize) -> i32 {
+    fn value_at(&self, index: usize) -> i64 {
         self.nodes[index].value
     }
 
-    fn to_vec(&self) -> Vec<i32> {
+    fn to_vec(&self) -> Vec<i64> {
         let mut vec = Vec::with_capacity(self.len);
         let mut current_index = 0;
         for _ in 0..self.len {
@@ -53,9 +56,9 @@ impl List {
         vec
     }
 
-    fn step(&self, index: usize, step: i32) -> usize {
+    fn step(&self, index: usize, step: i64) -> usize {
         let mut current_index = index;
-        let len = self.len as i32;
+        let len = self.len as i64;
         if step > 0 {
             for _ in 0..(step % len) {
                 current_index = self.nodes[current_index].right_index;
@@ -80,10 +83,11 @@ impl List {
         }
 
         // find new position
+        let step = value % (self.len as i64 - 1); // don't count our own position
         let insert_between_indices = if value > 0 {
-            (self.step(index, value), self.step(index, value + 1))
+            (self.step(index, step), self.step(index, step + 1))
         } else {
-            (self.step(index, value - 1), self.step(index, value))
+            (self.step(index, step - 1), self.step(index, step))
         };
 
         // remove from list
@@ -106,7 +110,7 @@ impl List {
         }
     }
 
-    fn get_grove_coordinates(&self) -> i32 {
+    fn get_grove_coordinates(&self) -> i64 {
         let zero_index = self.nodes.iter().position(|node| node.value == 0).unwrap();
         let index1000 = self.step(zero_index, 1000);
         let index2000 = self.step(zero_index, 2000);
@@ -116,21 +120,25 @@ impl List {
     }
 }
 
-fn part1(input: &str) -> i32 {
-    let mut list = List::from_input(input);
+fn part1(input: &str) -> i64 {
+    let mut list = List::from_input(input, 1);
     list.mix();
     list.get_grove_coordinates()
 }
 
-fn part2(input: &str) -> u32 {
-    0
+fn part2(input: &str) -> i64 {
+    let mut list = List::from_input(input, 811589153);
+    for _ in 0..10 {
+        list.mix();
+    }
+    list.get_grove_coordinates()
 }
 
-pub fn solution1() -> i32 {
+pub fn solution1() -> i64 {
     part1(&get_input(2022, 20))
 }
 
-pub fn solution2() -> u32 {
+pub fn solution2() -> i64 {
     part2(&get_input(2022, 20))
 }
 
@@ -146,7 +154,7 @@ mod tests {
     #[test]
     fn test_parse_input() {
         assert_eq!(
-            List::from_input(EXAMPLE_INPUT),
+            List::from_input(EXAMPLE_INPUT, 1),
             List {
                 nodes: vec![
                     Node::new(1, 6, 1),
@@ -164,7 +172,7 @@ mod tests {
 
     #[test]
     fn test_move_index() {
-        let mut list = List::from_input(EXAMPLE_INPUT);
+        let mut list = List::from_input(EXAMPLE_INPUT, 1);
         assert_eq!(list.to_vec(), vec![1, 2, -3, 3, -2, 0, 4]);
         list.move_index(0);
         assert_eq!(list.to_vec(), vec![1, -3, 3, -2, 0, 4, 2]);
@@ -183,9 +191,57 @@ mod tests {
     }
 
     #[test]
+    fn test_mix_with_decryption_key() {
+        let mut list = List::from_input(EXAMPLE_INPUT, 811589153);
+        assert_eq!(
+            list.to_vec(),
+            // initial arrangement
+            vec![
+                811589153,
+                1623178306,
+                -2434767459,
+                2434767459,
+                -1623178306,
+                0,
+                3246356612
+            ]
+        );
+
+        list.mix();
+        assert_eq!(
+            list.to_vec(),
+            // after 1 round of mixing
+            vec![
+                811589153,
+                0,
+                -2434767459,
+                3246356612,
+                -1623178306,
+                2434767459,
+                1623178306,
+            ]
+        );
+
+        list.mix();
+        assert_eq!(
+            list.to_vec(),
+            // after 2 rounds of mixing
+            vec![
+                811589153,
+                0,
+                2434767459,
+                1623178306,
+                3246356612,
+                -2434767459,
+                -1623178306,
+            ]
+        );
+    }
+
+    #[test]
     fn test_parts() {
         assert_eq!(part1(EXAMPLE_INPUT.trim()), 3);
-        assert_eq!(part2(EXAMPLE_INPUT.trim()), 0);
+        assert_eq!(part2(EXAMPLE_INPUT.trim()), 1623178306);
     }
 
     #[test]
@@ -193,7 +249,7 @@ mod tests {
         let start = Instant::now();
         assert_eq!(solution1(), 8372);
         let duration1 = start.elapsed();
-        assert_eq!(solution2(), 0);
+        assert_eq!(solution2(), 7865110481723);
         let duration2 = start.elapsed() - duration1;
         println!(
             "Part 1 took {}ms, Part 2 took {}ms",
