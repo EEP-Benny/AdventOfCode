@@ -2,7 +2,12 @@ node_modules
 
 # Don't publish inputs
 src/year*/day*.input.txt
+20*/*.input.txt
 
 # Added by cargo
 
 /target
+
+__pycache__/
+*.py[cod]
+*$py.class
