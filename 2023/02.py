@@ -10,6 +10,9 @@ class SetOfCubes:
     green: int
     blue: int
 
+    def get_power(self) -> int:
+        return self.red * self.green * self.blue
+
     def __le__(self, other: "SetOfCubes"):
         return (
             self.red <= other.red
@@ -38,6 +41,12 @@ class Game:
             set_of_cubes <= available_cubes for set_of_cubes in self.sets_of_cubes
         )
 
+    def get_minimal_set_of_cubes(self) -> SetOfCubes:
+        max_red = max(s.red for s in self.sets_of_cubes)
+        max_green = max(s.green for s in self.sets_of_cubes)
+        max_blue = max(s.blue for s in self.sets_of_cubes)
+        return SetOfCubes(max_red, max_green, max_blue)
+
 
 def parseGame(line: str) -> Game:
     match = re.match(r"Game (\d+): (.*)", line)
@@ -56,5 +65,10 @@ def solution1():
     return sum([game.id for game in games if game.is_possible(available_cubes)])
 
 
+def solution2():
+    return sum([game.get_minimal_set_of_cubes().get_power() for game in games])
+
+
 if __name__ == "__main__":
     print(solution1())
+    print(solution2())
