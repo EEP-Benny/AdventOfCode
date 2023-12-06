@@ -14,14 +14,19 @@ class Race:
         d = self.record_distance
         min_hold_time = math.ceil((t - math.sqrt(t * t - 4 * d)) / 2)
         max_hold_time = math.floor((t + math.sqrt(t * t - 4 * d)) / 2)
-        print(min_hold_time, max_hold_time)
         return max_hold_time - min_hold_time + 1
 
 
-def parse_input(input: "list[str]") -> "list[Race]":
+def parse_races(input: "list[str]") -> "list[Race]":
     times = re.split(r"\s+", input[0])[1:]
     distances = re.split(r"\s+", input[1])[1:]
     return [Race(int(time), int(distance)) for time, distance in zip(times, distances)]
+
+
+def parse_race(input: "list[str]") -> Race:
+    time = "".join(re.split(r"\s+", input[0])[1:])
+    distance = "".join(re.split(r"\s+", input[1])[1:])
+    return Race(int(time), int(distance))
 
 
 input = getInput(2023, 6)
@@ -32,7 +37,7 @@ def solution1():
 
 
 def solution2():
-    return
+    return parse_race(input).get_win_possibilities()
 
 
 if __name__ == "__main__":
