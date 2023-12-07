@@ -38,9 +38,29 @@ class Hand:
         counter = Counter(self.cards)
         return get_score_from_counter(counter)
 
+    def get_score_with_joker(self):
+        counter_orig = Counter(self.cards)
+        if counter_orig.get("J") in [0, 5]:
+            # no jokers or all jokers
+            return get_score_from_counter(counter_orig)
+        most_common_not_joker_card = [
+            card for card, _ in counter_orig.most_common() if card != "J"
+        ][0]
+        counter_with_joker = Counter(
+            [card if card != "J" else most_common_not_joker_card for card in self.cards]
+        )
+        return get_score_from_counter(counter_with_joker)
+
 
 def decorate(hand: Hand) -> "tuple[int, list[int]]":
     return (hand.get_score(), [card_strengths[card] for card in hand.cards])
+
+
+def decorate_with_joker(hand: Hand) -> "tuple[int, list[int]]":
+    return (
+        hand.get_score_with_joker(),
+        [card_strengths[card] if card != "J" else 1 for card in hand.cards],
+    )
 
 
 def parse_input_line(line: str) -> "tuple[Hand, int]":
@@ -72,7 +92,7 @@ def solution1():
 
 
 def solution2():
-    return
+    return calculate_winnings(hands_and_bids, decorate_with_joker)
 
 
 if __name__ == "__main__":
