@@ -41,7 +41,16 @@ def solution1():
 
 
 def solution2():
-    return
+    step_count = 0
+    current_node_ids = [key for key in network.nodes.keys() if key.endswith("A")]
+    while not all(id.endswith("Z") for id in current_node_ids):
+        current_nodes = [network.nodes.get(id) for id in current_node_ids]
+        instruction = instructions[step_count % len(instructions)]
+        current_node_ids = [
+            (node.left if instruction == "L" else node.right) for node in current_nodes
+        ]
+        step_count += 1
+    return step_count
 
 
 if __name__ == "__main__":
