@@ -1,3 +1,4 @@
+import math
 import re
 from dataclasses import dataclass
 from utils import getRawInput
@@ -41,16 +42,27 @@ def solution1():
 
 
 def solution2():
-    step_count = 0
-    current_node_ids = [key for key in network.nodes.keys() if key.endswith("A")]
-    while not all(id.endswith("Z") for id in current_node_ids):
-        current_nodes = [network.nodes.get(id) for id in current_node_ids]
-        instruction = instructions[step_count % len(instructions)]
-        current_node_ids = [
-            (node.left if instruction == "L" else node.right) for node in current_nodes
-        ]
-        step_count += 1
-    return step_count
+    def find_next_target_node(node_id: str) -> "tuple[int, str]":
+        step = 0
+        while not node_id.endswith("Z") or step == 0:
+            node = network.nodes.get(node_id)
+            instruction = instructions[step % len(instructions)]
+            node_id = node.left if instruction == "L" else node.right
+            step += 1
+
+        assert step % len(instructions) == 0
+
+        return (step, node_id)
+
+    cycle_times = []
+    for start_node in network.nodes.keys():
+        if start_node.endswith("A"):
+            initial_steps, target_node = find_next_target_node(start_node)
+            cycle_steps, target_target_node = find_next_target_node(target_node)
+            assert initial_steps == cycle_steps
+            assert target_node == target_target_node
+            cycle_times.append(initial_steps)
+    return math.lcm(*cycle_times)
 
 
 if __name__ == "__main__":
