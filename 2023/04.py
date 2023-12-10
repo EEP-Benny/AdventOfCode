@@ -8,6 +8,9 @@ class ScratchCard:
     winning_numbers: list[int]
     numbers_you_have: list[int]
 
+    def get_match_count(self):
+        return len(set(self.numbers_you_have).intersection(self.winning_numbers))
+
 
 def parse_input(lines: list[str]) -> list[ScratchCard]:
     return [
@@ -29,16 +32,22 @@ scratch_cards = parse_input(input)
 def solution1():
     points = 0
     for scratch_card in scratch_cards:
-        matches = set(scratch_card.numbers_you_have).intersection(
-            scratch_card.winning_numbers
-        )
-        if len(matches) > 0:
-            points += 2 ** (len(matches) - 1)
+        match_count = scratch_card.get_match_count()
+        if match_count > 0:
+            points += 2 ** (match_count - 1)
     return points
 
 
 def solution2():
-    return
+    number_of_copies = [1 for _ in scratch_cards]
+    for i, scratch_card in enumerate(scratch_cards):
+        match_count = scratch_card.get_match_count()
+        for copy_i in range(i + 1, i + 1 + match_count):
+            try:
+                number_of_copies[copy_i] += number_of_copies[i]
+            except IndexError:
+                pass
+    return sum(number_of_copies)
 
 
 if __name__ == "__main__":
