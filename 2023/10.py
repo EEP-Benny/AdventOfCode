@@ -74,30 +74,27 @@ def solution1():
 def solution2():
     loop_coordinates = grid.get_loop(start_coordinate)
     inside_coordinates: set[Coordinate] = set()
-    x = 0
+    y = 0
     while True:
-        y = 0
+        x = 0
+        up_count = 0
+        down_count = 0
         while True:
             coordinate = Coordinate(x, y)
             if coordinate not in grid:
                 break
-            if coordinate not in loop_coordinates:
-                up_count = 0
-                down_count = 0
-                for test_x in range(0, x):
-                    test_coordinate = Coordinate(test_x, y)
-                    if test_coordinate in loop_coordinates:
-                        connections = grid.get(test_coordinate).get_connections()
-                        if (Coordinate(test_x, y - 1)) in connections:
-                            up_count += 1
-                        if (Coordinate(test_x, y + 1)) in connections:
-                            down_count += 1
-                if min(up_count, down_count) % 2 == 1:
-                    inside_coordinates.add(coordinate)
-            y += 1
-        if y == 0:
+            if coordinate in loop_coordinates:
+                connections = grid.get(coordinate).get_connections()
+                if (Coordinate(x, y - 1)) in connections:
+                    up_count += 1
+                if (Coordinate(x, y + 1)) in connections:
+                    down_count += 1
+            elif up_count % 2 == 1 and down_count % 2 == 1:
+                inside_coordinates.add(coordinate)
+            x += 1
+        if x == 0:
             break
-        x += 1
+        y += 1
     return len(inside_coordinates)
 
 
