@@ -26,7 +26,28 @@ class Tile:
 
 
 class Grid(UserDict[Coordinate, Tile]):
-    pass
+    def get_loop(self, start_coordinate: Coordinate) -> set[Coordinate]:
+        neighboring_tiles = [
+            self.get(Coordinate(start_coordinate.x + dx, start_coordinate.y + dy))
+            for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        ]
+        next_tiles = [
+            tile
+            for tile in neighboring_tiles
+            if tile is not None and tile.is_connected_to(start_coordinate)
+        ]
+        assert len(next_tiles) == 2
+        visited_coordinates = set([start_coordinate])
+        while len(next_tiles) > 0:
+            current_tiles = next_tiles
+            next_tiles = []
+            for tile in current_tiles:
+                connections = tile.get_connections()
+                for coordinate in connections:
+                    if coordinate not in visited_coordinates:
+                        visited_coordinates.add(coordinate)
+                        next_tiles.append(self.get(coordinate))
+        return visited_coordinates
 
 
 def parse_input(input: "list[str]") -> tuple[Grid, Coordinate]:
@@ -46,31 +67,38 @@ grid, start_coordinate = parse_input(input)
 
 
 def solution1():
-    neighboring_tiles = [
-        grid.get(Coordinate(start_coordinate.x + dx, start_coordinate.y + dy))
-        for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    ]
-    next_tiles = [
-        tile for tile in neighboring_tiles if tile.is_connected_to(start_coordinate)
-    ]
-    assert len(next_tiles) == 2
-    visited_coordinates = set([start_coordinate])
-    step_count = 0
-    while len(next_tiles) > 0:
-        current_tiles = next_tiles
-        next_tiles = []
-        for tile in current_tiles:
-            connections = tile.get_connections()
-            for coordinate in connections:
-                if coordinate not in visited_coordinates:
-                    visited_coordinates.add(coordinate)
-                    next_tiles.append(grid.get(coordinate))
-        step_count += 1
-    return step_count
+    loop_coordinates = grid.get_loop(start_coordinate)
+    return len(loop_coordinates) // 2
 
 
 def solution2():
-    return
+    loop_coordinates = grid.get_loop(start_coordinate)
+    inside_coordinates: set[Coordinate] = set()
+    x = 0
+    while True:
+        y = 0
+        while True:
+            coordinate = Coordinate(x, y)
+            if coordinate not in grid:
+                break
+            if coordinate not in loop_coordinates:
+                up_count = 0
+                down_count = 0
+                for test_x in range(0, x):
+                    test_coordinate = Coordinate(test_x, y)
+                    if test_coordinate in loop_coordinates:
+                        connections = grid.get(test_coordinate).get_connections()
+                        if (Coordinate(test_x, y - 1)) in connections:
+                            up_count += 1
+                        if (Coordinate(test_x, y + 1)) in connections:
+                            down_count += 1
+                if min(up_count, down_count) % 2 == 1:
+                    inside_coordinates.add(coordinate)
+            y += 1
+        if y == 0:
+            break
+        x += 1
+    return len(inside_coordinates)
 
 
 if __name__ == "__main__":
