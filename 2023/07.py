@@ -1,4 +1,3 @@
-from operator import itemgetter
 from collections import Counter
 from dataclasses import dataclass
 from utils import getInput
@@ -52,11 +51,11 @@ class Hand:
         return get_score_from_counter(counter_with_joker)
 
 
-def decorate(hand: Hand) -> "tuple[int, list[int]]":
+def sort_key(hand: Hand) -> "tuple[int, list[int]]":
     return (hand.get_score(), [card_strengths[card] for card in hand.cards])
 
 
-def decorate_with_joker(hand: Hand) -> "tuple[int, list[int]]":
+def sort_key_with_joker(hand: Hand) -> "tuple[int, list[int]]":
     return (
         hand.get_score_with_joker(),
         [card_strengths[card] if card != "J" else 1 for card in hand.cards],
@@ -72,12 +71,10 @@ def parse_input(input: "list[str]"):
     return [parse_input_line(line) for line in input]
 
 
-def calculate_winnings(hands_and_bids, get_decoration) -> int:
-    decorated_hands_and_bids = [
-        (get_decoration(hand), hand, bid) for hand, bid in hands_and_bids
-    ]
-    decorated_hands_and_bids.sort(key=itemgetter(0))
-    sorted_hands_and_bids = [(hand, bid) for _, hand, bid in decorated_hands_and_bids]
+def calculate_winnings(hands_and_bids, get_sort_key) -> int:
+    sorted_hands_and_bids = sorted(
+        hands_and_bids, key=lambda hand_and_bid: get_sort_key(hand_and_bid[0])
+    )
     return sum(
         (index + 1) * bid for index, (_, bid) in enumerate(sorted_hands_and_bids)
     )
@@ -88,11 +85,11 @@ hands_and_bids = parse_input(input)
 
 
 def solution1():
-    return calculate_winnings(hands_and_bids, decorate)
+    return calculate_winnings(hands_and_bids, sort_key)
 
 
 def solution2():
-    return calculate_winnings(hands_and_bids, decorate_with_joker)
+    return calculate_winnings(hands_and_bids, sort_key_with_joker)
 
 
 if __name__ == "__main__":
