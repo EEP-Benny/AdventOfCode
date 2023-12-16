@@ -52,8 +52,6 @@ def get_reflection(tile: str, dir: Direction) -> list[Direction]:
 @dataclass
 class Contraption:
     grid: list[list[str]]
-    energized_tiles = set[Coordinate]()
-    already_checked_beams = set[tuple[Coordinate, Direction]]()
 
     def __getitem__(self, coord: Coordinate):
         if 0 <= coord.y < len(self.grid) and 0 <= coord.x < len(self.grid[coord.y]):
@@ -61,19 +59,24 @@ class Contraption:
         else:
             return None
 
-    def light_beam(self, initial_coord: Coordinate, initial_dir: Direction):
+    def get_tiles_energized_by_light_beam(
+        self, initial_coord: Coordinate, initial_dir: Direction
+    ) -> int:
         beams_to_check = set[tuple[Coordinate, Direction]](
             [(initial_coord, initial_dir)]
         )
+        energized_tiles = set[Coordinate]()
+        already_checked_beams = set[tuple[Coordinate, Direction]]()
         while beams_to_check:
             coord, dir = beams_to_check.pop()
             tile = self[coord]
-            if tile is None or (coord, dir) in self.already_checked_beams:
+            if tile is None or (coord, dir) in already_checked_beams:
                 continue
-            self.energized_tiles.add(coord)
-            self.already_checked_beams.add((coord, dir))
+            energized_tiles.add(coord)
+            already_checked_beams.add((coord, dir))
             for new_direction in get_reflection(tile, dir):
                 beams_to_check.add((coord.step(new_direction), new_direction))
+        return len(energized_tiles)
 
 
 def parse_input(input: "list[str]") -> Contraption:
@@ -81,12 +84,13 @@ def parse_input(input: "list[str]") -> Contraption:
 
 
 input = getInput(2023, 16)
+contraption = parse_input(input)
 
 
 def solution1():
-    contraption = parse_input(input)
-    contraption.light_beam(Coordinate(0, 0), Direction.RIGHT)
-    return len(contraption.energized_tiles)
+    return contraption.get_tiles_energized_by_light_beam(
+        Coordinate(0, 0), Direction.RIGHT
+    )
 
 
 def solution2():
