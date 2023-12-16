@@ -94,7 +94,19 @@ def solution1():
 
 
 def solution2():
-    return
+    starting_configurations: list[tuple[Coordinate, Direction]] = []
+    size_x = len(contraption.grid[0])
+    size_y = len(contraption.grid)
+    for x in range(0, size_x):
+        starting_configurations.append((Coordinate(x, 0), Direction.DOWN))
+        starting_configurations.append((Coordinate(x, size_y - 1), Direction.UP))
+    for y in range(0, size_y):
+        starting_configurations.append((Coordinate(0, y), Direction.RIGHT))
+        starting_configurations.append((Coordinate(size_x - 1, y), Direction.LEFT))
+    return max(
+        contraption.get_tiles_energized_by_light_beam(coord, dir)
+        for coord, dir in starting_configurations
+    )
 
 
 if __name__ == "__main__":
