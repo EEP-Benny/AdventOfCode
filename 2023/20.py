@@ -45,6 +45,13 @@ class ConjunctionModule(Module):
         )
 
 
+class ReceivingModule(Module):
+    def process_pulse(self, pulse: Pulse) -> list[Pulse]:
+        if not pulse.is_high:
+            raise FileNotFoundError
+        return []
+
+
 class ModuleConfiguration(UserDict[str, Module]):
     pass
 
@@ -77,7 +84,6 @@ def parse_input(input: list[str]) -> ModuleConfiguration:
 
 
 input = getInput(2023, 20)
-modules = parse_input(input)
 
 
 def push_the_button(module_config: ModuleConfiguration) -> dict[bool, int]:
@@ -95,6 +101,7 @@ def push_the_button(module_config: ModuleConfiguration) -> dict[bool, int]:
 
 
 def solution1():
+    modules = parse_input(input)
     counter = Counter()
     for _ in range(1000):
         counter += push_the_button(modules)
@@ -102,7 +109,15 @@ def solution1():
 
 
 def solution2():
-    return
+    modules = parse_input(input)
+    modules["rx"] = ReceivingModule("rx", [], [])
+    button_presses = 0
+    while True:
+        button_presses += 1
+        try:
+            push_the_button(modules)
+        except FileNotFoundError:
+            return button_presses
 
 
 if __name__ == "__main__":
