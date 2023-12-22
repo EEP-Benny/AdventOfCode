@@ -27,6 +27,17 @@ class Block:
                 return True
         return False
 
+    def count_falling_blocks_when_disintegrated(self) -> int:
+        to_be_disintegrated = set([self])
+        already_disintegrated = set()
+        while to_be_disintegrated:
+            block = to_be_disintegrated.pop()
+            already_disintegrated.add(block)
+            for supported_block in block.supports:
+                if supported_block.supported_by.issubset(already_disintegrated):
+                    to_be_disintegrated.add(supported_block)
+        return len(already_disintegrated) - 1
+
 
 class PileOfBlocks(UserList[Block]):
     def apply_gravity(self):
@@ -84,7 +95,9 @@ def solution1():
 
 
 def solution2():
-    return
+    return sum(
+        block.count_falling_blocks_when_disintegrated() for block in pile_of_blocks
+    )
 
 
 if __name__ == "__main__":
