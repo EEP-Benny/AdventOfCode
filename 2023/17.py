@@ -18,31 +18,21 @@ class Position:
 
 
 @dataclass(frozen=True)
-class PositionAndSpeed(Position):
-    direction: Direction
-    speed: int
+class PositionAndNextDirection(Position):
+    is_next_direction_horizontal: bool
 
-    def get_next_options(
-        self,
-    ) -> "list[PositionAndSpeed]":
-        next_direction_and_speed = (
-            [(self.direction, self.speed + 1)] if self.speed < 2 else []
-        ) + (
-            [(Direction.DOWN, 0), (Direction.UP, 0)]
-            if self.direction in [Direction.LEFT, Direction.RIGHT]
-            else [(Direction.RIGHT, 0), (Direction.LEFT, 0)]
-        )
-        return [
-            PositionAndSpeed(self.x + dir.value[0], self.y + dir.value[1], dir, speed)
-            for dir, speed in next_direction_and_speed
-        ]
+    def go_distance(self, distance: int):
+        if self.is_next_direction_horizontal:
+            return PositionAndNextDirection(self.x + distance, self.y, False)
+        else:
+            return PositionAndNextDirection(self.x, self.y + distance, True)
 
 
 @dataclass(order=True)
 class QueueEntry:
     heuristic: int
     heat_loss_so_far: int
-    pos: PositionAndSpeed = field(compare=False)
+    pos: PositionAndNextDirection = field(compare=False)
 
 
 @dataclass
@@ -55,28 +45,38 @@ class Map:
         else:
             return None
 
-    def find_shortest_path(self) -> int:
+    def find_shortest_path(self, min_straight: int, max_straight: int) -> int:
         queue = PriorityQueue[QueueEntry]()
         for pos in [
-            PositionAndSpeed(1, 0, Direction.RIGHT, 1),
-            PositionAndSpeed(0, 1, Direction.DOWN, 1),
+            PositionAndNextDirection(0, 0, True),
+            PositionAndNextDirection(0, 0, False),
         ]:
-            queue.put(QueueEntry(0, self[pos], pos))
+            queue.put(QueueEntry(0, 0, pos))
         target_pos = Position(len(self.grid[0]) - 1, len(self.grid) - 1)
-        already_found = dict[PositionAndSpeed, int]()
-        coming_from = dict[PositionAndSpeed, Position]()
+        already_found = dict[PositionAndNextDirection, int]()
         while queue:
             entry = queue.get_nowait()
+
+            if entry.pos in already_found:
+                if already_found[entry.pos] > entry.heat_loss_so_far:
+                    print(
+                        f"Something went wrong at {entry.pos=}: {already_found[entry.pos]=} > {entry.heat_loss_so_far=}"
+                    )
+                continue
+            already_found[entry.pos] = entry.heat_loss_so_far
+
             if entry.pos.x == target_pos.x and entry.pos.y == target_pos.y:
                 return entry.heat_loss_so_far
-            for next in entry.pos.get_next_options():
-                heat_loss_on_entry = self[next]
-                if heat_loss_on_entry is None:
-                    continue
-                next_heat_loss = entry.heat_loss_so_far + heat_loss_on_entry
-                if next not in already_found:
-                    already_found[next] = next_heat_loss
-                    coming_from[next] = Position(entry.pos.x, entry.pos.y)
+            for distance in range(min_straight, max_straight + 1):
+                for distance_sign in [1, -1]:
+                    next = entry.pos.go_distance(distance * distance_sign)
+                    if self[next] is None:
+                        continue
+                    additional_heat_loss = sum(
+                        self[entry.pos.go_distance(d * distance_sign)]
+                        for d in range(1, distance + 1)
+                    )
+                    next_heat_loss = entry.heat_loss_so_far + additional_heat_loss
                     heuristic = (
                         next_heat_loss + target_pos.x - next.x + target_pos.y - next.y
                     )
@@ -92,11 +92,11 @@ map = parse_input(input)
 
 
 def solution1():
-    return map.find_shortest_path()
+    return map.find_shortest_path(min_straight=1, max_straight=3)
 
 
 def solution2():
-    return
+    return map.find_shortest_path(min_straight=4, max_straight=10)
 
 
 if __name__ == "__main__":
