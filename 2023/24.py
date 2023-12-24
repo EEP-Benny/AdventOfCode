@@ -91,7 +91,18 @@ def solution1():
 
 
 def solution2():
-    return
+    equations = [
+        f"px + t{i} * dx == {hailstone.px} + t{i} * {hailstone.dx} && "
+        + f"py + t{i} * dy == {hailstone.py} + t{i} * {hailstone.dy} &&"
+        + f"pz + t{i} * dz == {hailstone.pz} + t{i} * {hailstone.dz}"
+        for i, hailstone in enumerate(hailstones[:3])
+    ]
+    print()
+    print(
+        "Open https://www.wolfram.com/language/#playground, paste in the following query, then calculate px + py + pz by hand."
+    )
+    print()
+    return "Solve[" + " && ".join(equations) + "]"
 
 
 if __name__ == "__main__":
