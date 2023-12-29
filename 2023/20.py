@@ -97,7 +97,7 @@ def push_the_button(module_config: ModuleConfiguration) -> dict[bool, int]:
 
     pulses_to_process = [Pulse(False, "button", "broadcaster")]
     while pulses_to_process:
-        pulse = pulses_to_process.pop()
+        pulse = pulses_to_process.pop(0)
         pulse_counter[pulse.is_high] += 1
         receiver = module_config.get(pulse.receiver)
         if receiver:
