@@ -45,15 +45,20 @@ class ConjunctionModule(Module):
         )
 
 
-class ReceivingModule(Module):
-    def process_pulse(self, pulse: Pulse) -> list[Pulse]:
-        if not pulse.is_high:
-            raise FileNotFoundError
-        return []
-
-
 class ModuleConfiguration(UserDict[str, Module]):
-    pass
+    def get_graph_visualization_link(self) -> str:
+        result = ""
+        for module in self.values():
+            if isinstance(module, FlipFlopModule):
+                result += f"{module.name} [shape=square, color=red]\n"
+            if isinstance(module, ConjunctionModule):
+                result += f"{module.name} [shape=circle, color=blue]\n"
+            for output in module.outputs:
+                result += f"{module.name} -> {output}\n"
+        result = "digraph {\n" + result + "\n}"
+        from urllib import parse
+
+        return "https://edotor.net/#" + parse.quote(result)
 
 
 def parse_input(input: list[str]) -> ModuleConfiguration:
@@ -84,6 +89,7 @@ def parse_input(input: list[str]) -> ModuleConfiguration:
 
 
 input = getInput(2023, 20)
+modules = parse_input(input)
 
 
 def push_the_button(module_config: ModuleConfiguration) -> dict[bool, int]:
@@ -101,7 +107,6 @@ def push_the_button(module_config: ModuleConfiguration) -> dict[bool, int]:
 
 
 def solution1():
-    modules = parse_input(input)
     counter = Counter()
     for _ in range(1000):
         counter += push_the_button(modules)
@@ -109,15 +114,38 @@ def solution1():
 
 
 def solution2():
-    modules = parse_input(input)
-    modules["rx"] = ReceivingModule("rx", [], [])
-    button_presses = 0
-    while True:
-        button_presses += 1
-        try:
-            push_the_button(modules)
-        except FileNotFoundError:
-            return button_presses
+    """
+    We can see from the graph visualization that the module graph consists of four binary counters
+    that reset at different numbers. Each binary counter consists of 12 flip flops in a row,
+    with a central conjunction module. This central conjunction module resets the flip flops
+    if a maximum number is reached, and outputs its value (via other conjunction modules) to the receiver (rx).
+    The receiver will receive the first low pulse if all binary counters overflow at the same time.
+    Since they are prime numbers, we can just multiply the maximum numbers together.
+    The maximum number can be calculated by looking at the connection between the flipflops
+    and the central conjunction module. Every connection from a flipflop to the conjunction module
+    represents a binary 1 at the corresponding bit.
+    """
+    print(modules.get_graph_visualization_link())
+    button_presses_needed = 1
+    for flip_flop_name in modules["broadcaster"].outputs:
+        current_number = 0
+        current_flip_flop_index = 0
+        flip_flop_module = modules[flip_flop_name]
+        while flip_flop_module:
+            outputs = [modules[next_name] for next_name in flip_flop_module.outputs]
+            is_input_for_conjunction = any(
+                isinstance(output, ConjunctionModule) for output in outputs
+            )
+            if is_input_for_conjunction:
+                current_number += 2**current_flip_flop_index
+            flip_flop_module = next(
+                (output for output in outputs if isinstance(output, FlipFlopModule)),
+                None,
+            )
+            current_flip_flop_index += 1
+        button_presses_needed *= current_number
+
+    return button_presses_needed
 
 
 if __name__ == "__main__":
