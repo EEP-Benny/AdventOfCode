@@ -25,11 +25,10 @@ input = prepare_input(get_input(day=1, year=2024))
 
 function part1()
     sorted_input = sort(input, dims=2)
-    sum_of_differences = 0
-    for (a, b) in eachcol(sorted_input)
-        sum_of_differences += abs(a - b)
+    function get_difference((a, b))
+        abs(a - b)
     end
-    sum_of_differences
+    sum(map(get_difference, eachcol(sorted_input)))
 end
 
 function part2()
@@ -37,7 +36,7 @@ function part2()
     sum(map(a -> a * count(==(a), list2), list1))
 end
 
-@time @show part1()
-@time @show part2()
+@show part1()
+@show part2()
 @time part1()
 @time part2()
