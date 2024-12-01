@@ -20,8 +20,8 @@ example_input = """
 3   3
 """
 
+input = prepare_input(example_input)
 input = prepare_input(get_input(day=1, year=2024))
-# input = prepare_input(example_input)
 
 function part1()
     sorted_input = sort(input, dims=2)
@@ -32,5 +32,12 @@ function part1()
     sum_of_differences
 end
 
+function part2()
+    (list1, list2) = eachrow(input)
+    sum(map(a -> a * count(==(a), list2), list1))
+end
+
 @time @show part1()
+@time @show part2()
 @time part1()
+@time part2()
