@@ -3,27 +3,14 @@ include("utils.jl")
 using .AdventOfCodeUtils
 
 function prepare_input(input::AbstractString)
-    input = rstrip(input)
     input = split(input, "\n")
-    input = split.(input)
+    input = split.(input, " ", keepempty=false)
     input = stack(input)
     input = parse.(Int, input)
     input
 end
 
-example_input = """
-3   4
-4   3
-2   5
-1   3
-3   9
-3   3
-"""
-
-input = prepare_input(example_input)
-input = prepare_input(get_input(day=1, year=2024))
-
-function part1()
+function part1(input)
     sorted_input = sort(input, dims=2)
     function get_difference((a, b))
         abs(a - b)
@@ -31,12 +18,15 @@ function part1()
     sum(map(get_difference, eachcol(sorted_input)))
 end
 
-function part2()
+function part2(input)
     (list1, list2) = eachrow(input)
     sum(map(a -> a * count(==(a), list2), list1))
 end
 
-@show part1()
-@show part2()
-@time part1()
-@time part2()
+if abspath(PROGRAM_FILE) == @__FILE__
+    input = prepare_input(get_input(day=1, year=2024))
+    @show part1(input)
+    @show part2(input)
+    @showtime part1(input)
+    @showtime part2(input)
+end
