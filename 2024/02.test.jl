@@ -22,14 +22,23 @@ end
     @test is_safe([1, 3, 6, 7, 9]) == true
 end
 
+@testset "is Report safe with tolerance" begin
+    @test is_safe_with_tolerance([7, 6, 4, 2, 1]) == true
+    @test is_safe_with_tolerance([1, 2, 7, 8, 9]) == false
+    @test is_safe_with_tolerance([9, 7, 6, 2, 1]) == false
+    @test is_safe_with_tolerance([1, 3, 2, 4, 5]) == true
+    @test is_safe_with_tolerance([8, 6, 4, 4, 1]) == true
+    @test is_safe_with_tolerance([1, 3, 6, 7, 9]) == true
+end
+
 @testset "Example Input" begin
     input = prepare_input(example_input)
     @test part1(input) === 2
-    @test part2(input) === nothing
+    @test part2(input) === 4
 end
 
 @testset "Real input" begin
     input = prepare_input(get_input(day=2, year=2024))
     @test part1(input) === 407
-    @test part2(input) === nothing
+    @test part2(input) === 459
 end

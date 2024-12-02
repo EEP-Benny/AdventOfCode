@@ -13,6 +13,19 @@ function is_safe(report::Report)::Bool
     all(map(difference -> -3 <= difference <= -1, differences)) || all(map(difference -> 1 <= difference <= 3, differences))
 end
 
+function is_safe_with_tolerance(report::Report)::Bool
+    if is_safe(report)
+        return true
+    end
+    for i in 1:length(report)
+        report_without_level_i = vcat(report[begin:i-1], report[i+1:end])
+        if is_safe(report_without_level_i)
+            return true
+        end
+    end
+    return false
+end
+
 function prepare_input(input::AbstractString)
     input = split(input, "\n")
     parse.(Report, input)
@@ -23,7 +36,7 @@ function part1(input)
 end
 
 function part2(input)
-    nothing
+    count(is_safe_with_tolerance, input)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
