@@ -57,14 +57,21 @@ end
     @test middle_page_number(parse(Update, "75,29,13")) == 29
 end
 
+@testset "sort_update" begin
+    rules = prepare_input(example_input)[1]
+    @test sort_update(parse(Update, "75,97,47,61,53"), rules) == [97, 75, 47, 61, 53]
+    @test sort_update(parse(Update, "61,13,29"), rules) == Vector([61, 29, 13])
+    @test sort_update(parse(Update, "97,13,75,29,47"), rules) == Vector([97, 75, 47, 29, 13])
+end
+
 @testset "Example Input" begin
     input = prepare_input(example_input)
     @test part1(input) === 143
-    @test part2(input) === nothing
+    @test part2(input) === 123
 end
 
 @testset "Real input" begin
     input = prepare_input(get_input(day=5, year=2024))
     @test part1(input) === 7198
-    @test part2(input) === nothing
+    @test part2(input) === 4230
 end

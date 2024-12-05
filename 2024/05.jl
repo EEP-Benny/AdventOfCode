@@ -29,7 +29,19 @@ function middle_page_number(update::Update)
     update[(begin+end)÷2]
 end
 
-
+function sort_update(update::Update, rules::Vector{PageOrderingRule})::Update
+    function lt(a, b)
+        for (rule_a, rule_b) in rules
+            if rule_a == a && rule_b == b
+                return true
+            elseif rule_a == b && rule_b == a
+                return false
+            end
+        end
+        return false
+    end
+    sort(update, lt=lt)
+end
 
 
 function prepare_input(input::AbstractString)::ParsedInput
@@ -43,7 +55,8 @@ function part1(input::ParsedInput)
 end
 
 function part2(input::ParsedInput)
-    nothing
+    rules, updates = input
+    sum(middle_page_number(sort_update(update, rules)) for update in updates if !is_in_right_order(update, rules))
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
