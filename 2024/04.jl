@@ -31,12 +31,34 @@ function count_xmas(input::Grid)
     count
 end
 
+function count_cross_mas(input::Grid)
+    count = 0
+    for y in axes(input, 2), x in axes(input, 1)
+        if !checkbounds(Bool, input, x - 1, y - 1) || !checkbounds(Bool, input, x + 1, y + 1)
+            continue
+        end
+        if input[x, y] != 'A'
+            continue
+        end
+        if (
+            ((input[x-1, y-1] == 'M' && input[x+1, y+1] == 'S') ||
+             (input[x-1, y-1] == 'S' && input[x+1, y+1] == 'M'))
+            &&
+            ((input[x+1, y-1] == 'M' && input[x-1, y+1] == 'S') ||
+             (input[x+1, y-1] == 'S' && input[x-1, y+1] == 'M'))
+        )
+            count += 1
+        end
+    end
+    count
+end
+
 function part1(input)
     count_xmas(input)
 end
 
 function part2(input)
-    nothing
+    count_cross_mas(input)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
