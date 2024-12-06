@@ -36,9 +36,9 @@ end
 
 
 function part1(input::LabWithGuard)
-    visited_positions = Set{Tuple{Int,Int}}([input.guard_position])
     guard_position = input.guard_position
     guard_direction = input.guard_direction
+    visited_positions = Set{Tuple{Int,Int}}([guard_position])
     while checkbounds(Bool, input.map, CartesianIndex(guard_position .+ guard_direction))
         if input.map[CartesianIndex(guard_position .+ guard_direction)]
             guard_direction = turn_right(guard_direction)
@@ -50,8 +50,42 @@ function part1(input::LabWithGuard)
     length(visited_positions)
 end
 
+function results_in_loop(guard_position, guard_direction, map, extra_obstruction_position)::Bool
+    visited_positions_and_directions = Set{Tuple{Int,Int,Int,Int}}([(guard_position..., guard_direction...)])
+    while true
+        if ((guard_position .+ guard_direction)..., guard_direction...) in visited_positions_and_directions
+            return true
+        end
+        if !checkbounds(Bool, map, CartesianIndex(guard_position .+ guard_direction))
+            return false
+        end
+        if map[CartesianIndex(guard_position .+ guard_direction)] || guard_position .+ guard_direction == extra_obstruction_position
+            guard_direction = turn_right(guard_direction)
+        else
+            guard_position = guard_position .+ guard_direction
+            push!(visited_positions_and_directions, (guard_position..., guard_direction...))
+        end
+    end
+end
+
 function part2(input)
-    nothing
+    guard_position = input.guard_position
+    guard_direction = input.guard_direction
+    visited_positions_and_directions = Set{Tuple{Int,Int,Int,Int}}([(guard_position..., guard_direction...)])
+    possible_obstruction_positions = Set{Tuple{Int,Int}}()
+    while checkbounds(Bool, input.map, CartesianIndex(guard_position .+ guard_direction))
+        if input.map[CartesianIndex(guard_position .+ guard_direction)]
+            guard_direction = turn_right(guard_direction)
+        else
+            extra_obstruction_position = guard_position .+ guard_direction
+            if results_in_loop(input.guard_position, input.guard_direction, input.map, extra_obstruction_position)
+                push!(possible_obstruction_positions, extra_obstruction_position)
+            end
+            guard_position = guard_position .+ guard_direction
+            push!(visited_positions_and_directions, (guard_position..., guard_direction...))
+        end
+    end
+    length(possible_obstruction_positions)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

@@ -33,11 +33,11 @@ end
 @testset "Example Input" begin
     input = prepare_input(example_input)
     @test part1(input) === 41
-    @test part2(input) === nothing
+    @test part2(input) === 6
 end
 
 @testset "Real input" begin
     input = prepare_input(get_input(day=6, year=2024))
     @test part1(input) === 4826
-    @test part2(input) === nothing
+    @test part2(input) === 1721
 end
