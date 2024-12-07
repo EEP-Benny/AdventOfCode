@@ -25,6 +25,15 @@ end
     @test could_possibly_true(parse(CalibrationEquation, "161011: 16 10 13")) == false
 end
 
+@testset "get_concatenation_factor" begin
+    @test get_concatenation_factor(0) == 10
+    @test get_concatenation_factor(1) == 10
+    @test get_concatenation_factor(99) == 100
+    @test get_concatenation_factor(100) == 1000
+    @test get_concatenation_factor(9999) == 10000
+    @test get_concatenation_factor(10000) == 100000
+end
+
 @testset "could_possibly_true_with_concatenation" begin
     @test could_possibly_true_with_concatenation(parse(CalibrationEquation, "190: 10 19")) == true
     @test could_possibly_true_with_concatenation(parse(CalibrationEquation, "3267: 81 40 27")) == true

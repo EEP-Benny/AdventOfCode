@@ -33,12 +33,24 @@ function could_possibly_true(equation::CalibrationEquation)::Bool
     inner(equation.numbers...)
 end
 
+function get_concatenation_factor(value::Int64)
+    factor = 10
+    while value >= 10
+        value ÷= 10
+        factor *= 10
+    end
+    factor
+end
+
 function could_possibly_true_with_concatenation(equation::CalibrationEquation)::Bool
     function inner(first, second=nothing, rest...)
         if second === nothing
             return first === equation.test_value
         end
-        return inner(first + second, rest...) || inner(first * second, rest...) || inner(parse(Int64, string(first) * string(second)), rest...)
+        if inner(first + second, rest...) || inner(first * second, rest...)
+            return true
+        end
+        return inner(first * get_concatenation_factor(second) + second, rest...)
     end
     inner(equation.numbers...)
 end
