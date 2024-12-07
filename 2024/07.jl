@@ -33,12 +33,22 @@ function could_possibly_true(equation::CalibrationEquation)::Bool
     inner(equation.numbers...)
 end
 
+function could_possibly_true_with_concatenation(equation::CalibrationEquation)::Bool
+    function inner(first, second=nothing, rest...)
+        if second === nothing
+            return first === equation.test_value
+        end
+        return inner(first + second, rest...) || inner(first * second, rest...) || inner(parse(Int64, string(first) * string(second)), rest...)
+    end
+    inner(equation.numbers...)
+end
+
 function part1(input)
     sum(map(eq -> eq.test_value, filter(could_possibly_true, input)))
 end
 
 function part2(input)
-    nothing
+    sum(map(eq -> eq.test_value, filter(could_possibly_true_with_concatenation, input)))
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
