@@ -30,6 +30,9 @@ function could_possibly_be_true(equation::CalibrationEquation; with_concatenatio
         if current_index > number_count
             return current_result === equation.test_value
         end
+        if current_result > equation.test_value
+            return false
+        end
         a = current_result
         b = numbers[current_index]
         next_index = current_index + 1
