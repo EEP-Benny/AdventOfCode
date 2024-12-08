@@ -29,16 +29,19 @@ function prepare_input(input::AbstractString)::Map
     Map(map_size, antenna_positions)
 end
 
-function find_antinode_positions(map::Map)
+function find_antinode_positions(map::Map, multiples=[1])
     positions = Set{Tuple{Int,Int}}()
     for (_, antenna_positions) in map.antenna_positions
         for a1 in antenna_positions, a2 in antenna_positions
             if a1 === a2
                 continue
             end
-            antinode_position = 2 .* a1 .- a2
-            if all((1, 1) .<= antinode_position .<= map.map_size)
-                push!(positions, antinode_position)
+            difference = a1 .- a2
+            for factor in multiples
+                antinode_position = a1 .+ (factor .* difference)
+                if all((1, 1) .<= antinode_position .<= map.map_size)
+                    push!(positions, antinode_position)
+                end
             end
         end
     end
@@ -50,7 +53,8 @@ function part1(input)
 end
 
 function part2(input)
-    nothing
+    length(find_antinode_positions(input, 0:maximum(input.map_size)))
+
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
