@@ -24,13 +24,19 @@ function prepare_input(input::AbstractString)::Vector{CalibrationEquation}
 end
 
 function could_possibly_true(equation::CalibrationEquation)::Bool
-    function inner(first, second=nothing, rest...)
-        if second === nothing
-            return first === equation.test_value
+    numbers = equation.numbers
+    number_count = length(numbers)
+    function inner(current_result, current_index)
+        if current_index > number_count
+            return current_result === equation.test_value
         end
-        return inner(first + second, rest...) || inner(first * second, rest...)
+        a = current_result
+        b = numbers[current_index]
+        next_index = current_index + 1
+
+        return inner(a + b, next_index) || inner(a * b, next_index)
     end
-    inner(equation.numbers...)
+    inner(numbers[1], 2)
 end
 
 function get_concatenation_factor(value::Int64)
@@ -43,16 +49,22 @@ function get_concatenation_factor(value::Int64)
 end
 
 function could_possibly_true_with_concatenation(equation::CalibrationEquation)::Bool
-    function inner(first, second=nothing, rest...)
-        if second === nothing
-            return first === equation.test_value
+    numbers = equation.numbers
+    number_count = length(numbers)
+    function inner(current_result, current_index)
+        if current_index > number_count
+            return current_result === equation.test_value
         end
-        if inner(first + second, rest...) || inner(first * second, rest...)
+        a = current_result
+        b = numbers[current_index]
+        next_index = current_index + 1
+
+        if inner(a + b, next_index) || inner(a * b, next_index)
             return true
         end
-        return inner(first * get_concatenation_factor(second) + second, rest...)
+        return inner(a * get_concatenation_factor(b) + b, next_index)
     end
-    inner(equation.numbers...)
+    inner(numbers[1], 2)
 end
 
 function part1(input)
