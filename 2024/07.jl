@@ -23,7 +23,7 @@ function prepare_input(input::AbstractString)::Vector{CalibrationEquation}
     parse.(CalibrationEquation, split(input, "\n"))
 end
 
-function could_possibly_true(equation::CalibrationEquation)::Bool
+function could_possibly_be_true(equation::CalibrationEquation; with_concatenation=false)::Bool
     numbers = equation.numbers
     number_count = length(numbers)
     function inner(current_result, current_index)
@@ -34,7 +34,9 @@ function could_possibly_true(equation::CalibrationEquation)::Bool
         b = numbers[current_index]
         next_index = current_index + 1
 
-        return inner(a + b, next_index) || inner(a * b, next_index)
+        return inner(a + b, next_index) ||
+               inner(a * b, next_index) ||
+               (with_concatenation && inner(a * get_concatenation_factor(b) + b, next_index))
     end
     inner(numbers[1], 2)
 end
@@ -48,31 +50,12 @@ function get_concatenation_factor(value::Int64)
     factor
 end
 
-function could_possibly_true_with_concatenation(equation::CalibrationEquation)::Bool
-    numbers = equation.numbers
-    number_count = length(numbers)
-    function inner(current_result, current_index)
-        if current_index > number_count
-            return current_result === equation.test_value
-        end
-        a = current_result
-        b = numbers[current_index]
-        next_index = current_index + 1
-
-        if inner(a + b, next_index) || inner(a * b, next_index)
-            return true
-        end
-        return inner(a * get_concatenation_factor(b) + b, next_index)
-    end
-    inner(numbers[1], 2)
-end
-
 function part1(input)
-    sum(map(eq -> eq.test_value, filter(could_possibly_true, input)))
+    sum(map(eq -> eq.test_value, filter(could_possibly_be_true, input)))
 end
 
 function part2(input)
-    sum(map(eq -> eq.test_value, filter(could_possibly_true_with_concatenation, input)))
+    sum(map(eq -> eq.test_value, filter(eq -> could_possibly_be_true(eq, with_concatenation=true), input)))
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

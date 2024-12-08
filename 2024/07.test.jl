@@ -18,11 +18,11 @@ example_input = """
     @test parse(CalibrationEquation, "161011: 16 10 13") == CalibrationEquation(161011, [16, 10, 13])
 end
 
-@testset "could_possibly_true" begin
-    @test could_possibly_true(parse(CalibrationEquation, "190: 10 19")) == true
-    @test could_possibly_true(parse(CalibrationEquation, "3267: 81 40 27")) == true
-    @test could_possibly_true(parse(CalibrationEquation, "292: 11 6 16 20")) == true
-    @test could_possibly_true(parse(CalibrationEquation, "161011: 16 10 13")) == false
+@testset "could_possibly_be_true" begin
+    @test could_possibly_be_true(parse(CalibrationEquation, "190: 10 19")) == true
+    @test could_possibly_be_true(parse(CalibrationEquation, "3267: 81 40 27")) == true
+    @test could_possibly_be_true(parse(CalibrationEquation, "292: 11 6 16 20")) == true
+    @test could_possibly_be_true(parse(CalibrationEquation, "161011: 16 10 13")) == false
 end
 
 @testset "get_concatenation_factor" begin
@@ -34,14 +34,14 @@ end
     @test get_concatenation_factor(10000) == 100000
 end
 
-@testset "could_possibly_true_with_concatenation" begin
-    @test could_possibly_true_with_concatenation(parse(CalibrationEquation, "190: 10 19")) == true
-    @test could_possibly_true_with_concatenation(parse(CalibrationEquation, "3267: 81 40 27")) == true
-    @test could_possibly_true_with_concatenation(parse(CalibrationEquation, "292: 11 6 16 20")) == true
-    @test could_possibly_true_with_concatenation(parse(CalibrationEquation, "156: 15 6")) == true
-    @test could_possibly_true_with_concatenation(parse(CalibrationEquation, "7290: 6 8 6 15")) == true
-    @test could_possibly_true_with_concatenation(parse(CalibrationEquation, "192: 17 8 14")) == true
-    @test could_possibly_true_with_concatenation(parse(CalibrationEquation, "161011: 16 10 13")) == false
+@testset "could_possibly_be_true with concatenation" begin
+    @test could_possibly_be_true(parse(CalibrationEquation, "190: 10 19"), with_concatenation=true) == true
+    @test could_possibly_be_true(parse(CalibrationEquation, "3267: 81 40 27"), with_concatenation=true) == true
+    @test could_possibly_be_true(parse(CalibrationEquation, "292: 11 6 16 20"), with_concatenation=true) == true
+    @test could_possibly_be_true(parse(CalibrationEquation, "156: 15 6"), with_concatenation=true) == true
+    @test could_possibly_be_true(parse(CalibrationEquation, "7290: 6 8 6 15"), with_concatenation=true) == true
+    @test could_possibly_be_true(parse(CalibrationEquation, "192: 17 8 14"), with_concatenation=true) == true
+    @test could_possibly_be_true(parse(CalibrationEquation, "161011: 16 10 13"), with_concatenation=true) == false
 end
 
 @testset "Example Input" begin
