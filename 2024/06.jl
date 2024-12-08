@@ -53,17 +53,20 @@ end
 function results_in_loop(guard_position, guard_direction, map, extra_obstruction_position)::Bool
     visited_positions_and_directions = Set{Tuple{Int,Int,Int,Int}}([(guard_position..., guard_direction...)])
     while true
-        if ((guard_position .+ guard_direction)..., guard_direction...) in visited_positions_and_directions
-            return true
-        end
-        if !checkbounds(Bool, map, CartesianIndex(guard_position .+ guard_direction))
+        next_guard_position = guard_position .+ guard_direction
+        if !checkbounds(Bool, map, CartesianIndex(next_guard_position))
             return false
         end
-        if map[CartesianIndex(guard_position .+ guard_direction)] || guard_position .+ guard_direction == extra_obstruction_position
+        if map[CartesianIndex(next_guard_position)] || next_guard_position == extra_obstruction_position
+            pos_and_dir = (next_guard_position..., guard_direction...)
+            if pos_and_dir in visited_positions_and_directions
+                return true
+            else
+                push!(visited_positions_and_directions, pos_and_dir)
+            end
             guard_direction = turn_right(guard_direction)
         else
-            guard_position = guard_position .+ guard_direction
-            push!(visited_positions_and_directions, (guard_position..., guard_direction...))
+            guard_position = next_guard_position
         end
     end
 end
