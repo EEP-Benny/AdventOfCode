@@ -39,6 +39,49 @@ function compact_blocks(blocks::Vector{Int})
     blocks
 end
 
+function compact_files(blocks::Vector{Int})
+    blocks = copy(blocks)
+    current_block_id = blocks[end]
+    current_block_start_position = length(blocks)
+    while current_block_id > 0
+        while blocks[current_block_start_position] != current_block_id
+            current_block_start_position -= 1
+        end
+
+        # find current block
+        current_block_size = 0
+        while blocks[current_block_start_position] == current_block_id
+            current_block_start_position -= 1
+            current_block_size += 1
+        end
+
+        # find space for current block
+        free_block_end_position = 1
+        free_block_size = 0
+        while free_block_end_position <= current_block_start_position
+            if blocks[free_block_end_position] == -1
+                free_block_size += 1
+                if free_block_size >= current_block_size
+                    break
+                end
+            else
+                free_block_size = 0
+            end
+            free_block_end_position += 1
+        end
+
+        # move current block to free space
+        if free_block_size == current_block_size
+            for i in 1:current_block_size
+                blocks[current_block_start_position+i] = -1
+                blocks[free_block_end_position-i+1] = current_block_id
+            end
+        end
+        current_block_id -= 1
+    end
+    blocks
+end
+
 function get_checksum(blocks::Vector{Int})
     checksum = 0
     for (position, block_id) in enumerate(blocks)
@@ -54,7 +97,7 @@ function part1(input)
 end
 
 function part2(input)
-    nothing
+    get_checksum(compact_files(get_blocks(input)))
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
