@@ -39,14 +39,27 @@ end
     @test get_trailhead_score((8, 2), map) == 5
 end
 
+@testset "get_trailhead_rating" begin
+    map = parse(Grid, example_input)
+    @test get_trailhead_rating((1, 3), map) == 20
+    @test get_trailhead_rating((1, 5), map) == 24
+    @test get_trailhead_rating((3, 5), map) == 10
+    @test get_trailhead_rating((5, 7), map) == 4
+    @test get_trailhead_rating((6, 3), map) == 1
+    @test get_trailhead_rating((6, 6), map) == 4
+    @test get_trailhead_rating((7, 1), map) == 5
+    @test get_trailhead_rating((7, 7), map) == 8
+    @test get_trailhead_rating((8, 2), map) == 5
+end
+
 @testset "Example Input" begin
     input = prepare_input(example_input)
     @test part1(input) === 36
-    @test part2(input) === nothing
+    @test part2(input) === 81
 end
 
 @testset "Real input" begin
     input = prepare_input(get_input(day=10, year=2024))
     @test part1(input) === 841
-    @test part2(input) === nothing
+    @test part2(input) === 1875
 end
