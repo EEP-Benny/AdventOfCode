@@ -51,14 +51,7 @@ function get_trailhead_rating(trailhead_position::Tuple{Int,Int}, map::Grid)
 end
 
 function part1(input)
-    score_sum = 0
-    for y in axes(input, 2), x in axes(input, 1)
-        height = input[y, x]
-        if height == 0
-            score_sum += get_trailhead_score((y, x), input)
-        end
-    end
-    score_sum
+    sum(get_trailhead_score((y, x), input) for y in axes(input, 2), x in axes(input, 1) if input[y, x] == 0)
 end
 
 function part2(input)
