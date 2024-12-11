@@ -33,5 +33,5 @@ end
 @testset "Real input" begin
     input = prepare_input(get_input(day=9, year=2024))
     @test part1(input) === 6401092019345
-    @test part2(input) === nothing
+    @test part2(input) === 6431472344710
 end
