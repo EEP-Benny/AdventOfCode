@@ -41,7 +41,7 @@ end
 @testset "Example Input" begin
     input = prepare_input(example_input)
     @test part1(input) === 1930
-    @test part2(input) === nothing
+    @test part2(input) === 1206
 end
 
 @testset "Real input" begin

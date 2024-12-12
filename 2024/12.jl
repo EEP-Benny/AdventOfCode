@@ -10,6 +10,7 @@ mutable struct Region
     label::Char
     area::Int
     perimeter::Int
+    sides::Int
 end
 
 # import Base.==
@@ -29,7 +30,7 @@ function get_regions(input::Vector{Vector{Char}})::Set{Region}
         function has_same_label((x, y)::Tuple{Int,Int})::Bool
             checkbounds(Bool, input, y) && checkbounds(Bool, input[y], x) && input[y][x] == label
         end
-        region = Region(label, 0, 0)
+        region = Region(label, 0, 0, 0)
         position_to_region[position] = region
         positions_to_explore = Set([position])
         while !isempty(positions_to_explore)
@@ -45,6 +46,10 @@ function get_regions(input::Vector{Vector{Char}})::Set{Region}
                         end
                     else
                         region.perimeter += 1
+                        direction_to_left = (-direction[2], direction[1])
+                        if !has_same_label(position .+ direction_to_left) || has_same_label(next_position .+ direction_to_left)
+                            region.sides += 1
+                        end
                     end
                 end
             end
@@ -61,7 +66,7 @@ function part1(input)
 end
 
 function part2(input)
-    nothing
+    sum(region.area * region.sides for region in get_regions(input))
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
