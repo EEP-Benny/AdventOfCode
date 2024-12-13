@@ -44,7 +44,15 @@ function part1(input)
 end
 
 function part2(input)
-    nothing
+    sum_of_tokens = 0
+    for m in input
+        solution = solve_claw_machine(ClawMachine(m.buttonA, m.buttonB, (m.prize.x + 10000000000000, m.prize.y + 10000000000000)))
+        if solution !== nothing
+            a_presses, b_presses = solution
+            sum_of_tokens += a_presses * 3 + b_presses
+        end
+    end
+    sum_of_tokens
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
