@@ -29,22 +29,17 @@ end
 rotate_left((x, y)::Tuple{Int,Int}) = (y, -x)
 rotate_right((x, y)::Tuple{Int,Int}) = (-y, x)
 
-function get_score_of_best_path(maze)
+function find_best_path(maze)
     start_state = (maze.pos_start, (1, 0))
     score_per_state = Dict(start_state => 0)
+    tiles_leading_to_pos = Dict(maze.pos_start => [maze.pos_start])
     current_states = [start_state]
     while !isempty(current_states)
         next_states = []
         for (pos, dir) in current_states
             current_score = score_per_state[(pos, dir)]
-            while pos ∉ maze.walls
-                if pos == maze.pos_end
-                    return current_score
-                end
-                if !haskey(score_per_state, (pos, dir))
-                    score_per_state[(pos, dir)] = current_score
-                end
-
+            current_tiles = copy(tiles_leading_to_pos[pos])
+            while true
                 if pos .+ rotate_left(dir) ∉ maze.walls
                     new_state = (pos, rotate_left(dir))
                     if !haskey(score_per_state, new_state)
@@ -59,8 +54,25 @@ function get_score_of_best_path(maze)
                         score_per_state[new_state] = current_score + 1000
                     end
                 end
+
                 pos = pos .+ dir
+                if pos ∈ maze.walls
+                    break
+                end
                 current_score += 1
+                push!(current_tiles, pos)
+
+                if pos == maze.pos_end
+                    return current_score, length(current_tiles)
+                end
+                if !haskey(score_per_state, (pos, dir))
+                    score_per_state[(pos, dir)] = current_score
+                    tiles_leading_to_pos[pos] = copy(current_tiles)
+                elseif score_per_state[(pos, dir)] == current_score
+                    union!(current_tiles, tiles_leading_to_pos[pos])
+                    tiles_leading_to_pos[pos] = copy(current_tiles)
+                end
+
             end
         end
         current_states = next_states
@@ -68,13 +80,13 @@ function get_score_of_best_path(maze)
 end
 
 function part1(input)
-    get_score_of_best_path(input)
+    find_best_path(input)[1]
 end
 
 
 
 function part2(input)
-    nothing
+    find_best_path(input)[2]
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
