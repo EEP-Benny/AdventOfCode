@@ -62,8 +62,23 @@ function part1(input)
     get_safety_factor(simulate_steps(input, 100))
 end
 
+function draw_robots(room)
+    drawing = fill('.', room.size)
+    for robot in room.robots
+        drawing[robot.p[1]+1, robot.p[2]+1] = '#'
+    end
+
+    join(String.(eachcol(drawing)), "\n")
+end
+
 function part2(input)
-    nothing
+    open("14.output.txt", "w") do file
+        for i in 79:101:10000
+            write(file, "After $i steps:\n")
+            write(file, draw_robots(simulate_steps(input, i)))
+            write(file, "\n\n")
+        end
+    end
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
