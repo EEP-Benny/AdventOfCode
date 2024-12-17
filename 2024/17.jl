@@ -1,6 +1,7 @@
 include("utils.jl")
 
 using .AdventOfCodeUtils
+using Printf
 
 A = 1
 B = 2
@@ -52,13 +53,42 @@ function prepare_input(input::AbstractString)::Computer
     Computer(registers, program, 0, [])
 end
 
-function part1(c::Computer)
+function part1(input::Computer)
+    c = deepcopy(input)
     perform_all_instructions!(c)
     join(c.outputs, ",")
 end
 
+function get_output(number, computer)
+    c = deepcopy(computer)
+    c.registers[A] = number
+    perform_all_instructions!(c)
+    c.outputs
+end
+
+function try_digits(number, digit, computer)
+    for i in 0:7
+        output = get_output(number, computer)
+        # octal_number = @sprintf "%o" number
+        # @show i, digit, number, octal_number, output
+        if number > 0 && output[digit] == computer.program[digit]
+            if digit == 1
+                return number
+            else
+                try
+                    return try_digits(number, digit - 1, computer)
+                catch
+                end
+            end
+        end
+        number += 8^(digit - 1)
+    end
+    error("Didn't find anything")
+end
+
+
 function part2(input)
-    nothing
+    try_digits(0, length(input.program), input)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

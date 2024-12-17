@@ -8,6 +8,13 @@ Register C: 0
 
 Program: 0,1,5,4,3,0"""
 
+example_input_2 = """
+Register A: 2024
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0"""
+
 @testset "parse input" begin
     computer = prepare_input(example_input)
     @test computer.registers == [729, 0, 0]
@@ -35,11 +42,12 @@ end
 @testset "Example Input" begin
     input = prepare_input(example_input)
     @test part1(input) === "4,6,3,5,6,3,5,2,1,0"
-    @test part2(input) === nothing
+    input = prepare_input(example_input_2)
+    @test part2(input) === 117440
 end
 
 @testset "Real input" begin
     input = prepare_input(get_input(day=17, year=2024))
     @test part1(input) === "3,6,3,7,0,7,0,3,0"
-    @test part2(input) === nothing
+    @test part2(input) === 136904920099226
 end
