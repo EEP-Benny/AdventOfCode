@@ -37,7 +37,13 @@ end
 
 
 function part2(input)
-    nothing
+    byte_amount = length(input) < 1000 ? 12 : 1024
+    corrupted_coordinates = Set(input[1:byte_amount])
+    while find_shortest_static_path(corrupted_coordinates) !== nothing
+        byte_amount += 1
+        push!(corrupted_coordinates, input[byte_amount])
+    end
+    join(input[byte_amount], ",")
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
