@@ -17,12 +17,32 @@ function make_tester(towels)
             return false
         end
         for towel in towels
-            if startswith(design, towel) && is_possible(design[length(towel)+1:end],)
+            if startswith(design, towel) && is_possible(design[length(towel)+1:end])
                 return true
             end
         end
         push!(proven_to_be_impossible, design)
         return false
+    end
+end
+
+function make_counter(towels)
+    determined_counts = Dict{AbstractString,Int}()
+    function count_arrangements(design::AbstractString)
+        if design == ""
+            return 1
+        end
+        if haskey(determined_counts, design)
+            return determined_counts[design]
+        end
+        arrangements = 0
+        for towel in towels
+            if startswith(design, towel)
+                arrangements += count_arrangements(design[length(towel)+1:end])
+            end
+        end
+        determined_counts[design] = arrangements
+        return arrangements
     end
 end
 
@@ -34,7 +54,9 @@ end
 
 
 function part2(input)
-    nothing
+    towels, designs = input
+    count_arrangements = make_counter(towels)
+    sum(count_arrangements, designs)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
