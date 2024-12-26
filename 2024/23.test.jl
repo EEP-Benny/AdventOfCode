@@ -57,13 +57,22 @@ end
     ])
 end
 
+@testset "find_largest_interconnected_cluster" begin
+    connections = prepare_input(example_input)
+    @test find_largest_interconnected_cluster(connections) == Set(["co", "de", "ka", "ta"])
+end
+
+@testset "get_password" begin
+    @test get_password(Set(["co", "de", "ka", "ta"])) == "co,de,ka,ta"
+end
+
 @testset "Example Input" begin
     @test part1(prepare_input(example_input)) === 7
-    @test part2(prepare_input(example_input)) === nothing
+    @test part2(prepare_input(example_input)) === "co,de,ka,ta"
 end
 
 @testset "Real input" begin
     input = prepare_input(get_input(day=23, year=2024))
     @test part1(input) === 1344
-    @test part2(input) === nothing
+    @test part2(input) === "ab,al,cq,cr,da,db,dr,fw,ly,mn,od,py,uh"
 end
