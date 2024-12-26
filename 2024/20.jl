@@ -47,14 +47,15 @@ function find_path(track::Racetrack)
     path
 end
 
-function find_cheats(path::Vector{Pos})
+function find_cheats(path::Vector{Pos}, max_cheat_length=2)
     saved_times::Vector{Int} = []
     pos_to_time = Dict(pos => i for (i, pos) in enumerate(path))
     for cheat_start_pos in path
-        for dir in directions
-            cheat_end_pos = cheat_start_pos .+ 2 .* dir
-            if haskey(pos_to_time, cheat_end_pos)
-                saved_time = pos_to_time[cheat_end_pos] - pos_to_time[cheat_start_pos] - 2
+        for dx in -max_cheat_length:max_cheat_length, dy in -max_cheat_length:max_cheat_length
+            cheat_length = abs(dx) + abs(dy)
+            cheat_end_pos = cheat_start_pos .+ (dx, dy)
+            if cheat_length <= max_cheat_length && haskey(pos_to_time, cheat_end_pos)
+                saved_time = pos_to_time[cheat_end_pos] - pos_to_time[cheat_start_pos] - cheat_length
                 if saved_time > 0
                     push!(saved_times, saved_time)
                 end
@@ -71,7 +72,8 @@ end
 
 
 function part2(input)
-    nothing
+    cheats20 = find_cheats(find_path(input), 20)
+    count(>=(100), cheats20)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
