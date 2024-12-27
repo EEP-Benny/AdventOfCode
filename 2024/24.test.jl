@@ -65,7 +65,7 @@ tnw OR pbm -> gnj"""
 @testset "prepare_input" begin
     @test prepare_input(example_input_small) == (
         Dict("x00" => true, "x01" => true, "x02" => true, "y00" => false, "y01" => true, "y02" => false),
-        [Gate("x00", "y00", &, "z00"), Gate("x01", "y01", xor, "z01"), Gate("x02", "y02", |, "z02")]
+        [Gate("x00", "y00", "AND", "z00"), Gate("x01", "y01", "XOR", "z01"), Gate("x02", "y02", "OR", "z02")]
     )
 end
 
@@ -95,14 +95,12 @@ end
     )) == 2024
 end
 
-
 @testset "Example Input" begin
     @test part1(prepare_input(example_input)) == 2024
-    @test part2(prepare_input(example_input)) === nothing
 end
 
 @testset "Real input" begin
     input = prepare_input(get_input(day=24, year=2024))
     @test part1(input) == 51837135476040
-    @test part2(input) === nothing
+    @test part2(input) === "hjf,kdh,kpp,sgj,vss,z14,z31,z35"
 end
