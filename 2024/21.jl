@@ -51,24 +51,26 @@ function get_candidates_for_sequence(sequence::AbstractString)::Vector{Set{Strin
     keys_to_press
 end
 
-function get_min_keys_for_sequence(sequence::AbstractString)
-    memo = Dict{Tuple{AbstractString,Int},AbstractString}()
-    function get_min_keys_inner(sequence::AbstractString, level::Int)
-        if level >= 3
-            return sequence
+function get_min_number_of_keys_for_sequence(sequence::AbstractString, number_of_robots::Int)
+    memo = Dict{Tuple{AbstractString,Int},Int}()
+    function get_min_number_of_keys_inner(sequence::AbstractString, level::Int)
+        if level >= number_of_robots
+            return length(sequence)
         end
-        if haskey(memo, (sequence, level))
-            return memo[(sequence, level)]
+        memo_key = (sequence, level)
+        if haskey(memo, memo_key)
+            return memo[memo_key]
         end
         candidates_sequence = get_candidates_for_sequence(sequence)
-        min_keys = ""
+        min_keys = 0
         for candidates in candidates_sequence
-            min_keys_for_this = argmin(length, get_min_keys_inner(candidate, level + 1) for candidate in candidates)
-            min_keys *= min_keys_for_this
+            min_keys_for_this = minimum(get_min_number_of_keys_inner(candidate, level + 1) for candidate in candidates)
+            min_keys += min_keys_for_this
         end
+        memo[memo_key] = min_keys
         min_keys
     end
-    get_min_keys_inner(sequence, 0)
+    get_min_number_of_keys_inner(sequence, 0)
 end
 
 function get_numeric_part(s::AbstractString)
@@ -76,12 +78,12 @@ function get_numeric_part(s::AbstractString)
 end
 
 function part1(input)
-    sum(length(get_min_keys_for_sequence(sequence)) * get_numeric_part(sequence) for sequence in input)
+    sum(get_min_number_of_keys_for_sequence(sequence, 3) * get_numeric_part(sequence) for sequence in input)
 end
 
 
 function part2(input)
-    nothing
+    sum(get_min_number_of_keys_for_sequence(sequence, 26) * get_numeric_part(sequence) for sequence in input)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

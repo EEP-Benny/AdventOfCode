@@ -32,14 +32,12 @@ end
     @test get_candidates_for_sequence("1A") == [Set(["^<<A"]), Set([">>vA"])] # avoid the gap
 end
 
-@testset "get_min_keys_for_sequence" begin
-    # @test get_min_keys_for_sequence("029A") == "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A"
-    @test length(get_min_keys_for_sequence("029A")) == 68
-    @test length(get_min_keys_for_sequence("980A")) == 60
-    @test length(get_min_keys_for_sequence("179A")) == 68
-    # @test get_min_keys_for_sequence("179A") == "<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"
-    @test length(get_min_keys_for_sequence("456A")) == 64
-    @test length(get_min_keys_for_sequence("379A")) == 64
+@testset "get_min_number_of_keys_for_sequence" begin
+    @test get_min_number_of_keys_for_sequence("029A", 3) == 68
+    @test get_min_number_of_keys_for_sequence("980A", 3) == 60
+    @test get_min_number_of_keys_for_sequence("179A", 3) == 68
+    @test get_min_number_of_keys_for_sequence("456A", 3) == 64
+    @test get_min_number_of_keys_for_sequence("379A", 3) == 64
 end
 
 @testset "get_numeric_part" begin
@@ -50,11 +48,11 @@ end
 @testset "Example Input" begin
     input = prepare_input(example_input)
     @test part1(input) == 126384
-    @test part2(input) === nothing
+    # @test part2(input) === nothing
 end
 
 @testset "Real input" begin
     input = prepare_input(get_input(day=21, year=2024))
     @test part1(input) === 157892
-    @test part2(input) === nothing
+    @test part2(input) === 197015606336332
 end
