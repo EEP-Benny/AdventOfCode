@@ -1,0 +1,9 @@
+{
+    "rubyLsp.featureFlags": {
+        "fullTestDiscovery": true
+    },
+    "rubyLsp.formatter": "rubocop",
+    "cSpell.words": [
+        "nodoc"
+    ]
+}

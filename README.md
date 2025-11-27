@@ -26,3 +26,8 @@ _I don't remember how to run this, you have to find out on your own. Source code
 - `julia 2024/01.test.jl` to run the tests for day 1 (which also checks the final solutions)
 - `julia 2024/01.jl` to get the final solutions for day 1 (and also measure the performance)
 - `for i in {01..08}; do echo "Day $i"; julia 2024/$i.jl; echo; done` to get the final solutions for day 1 to 8
+
+## 2025: Ruby
+
+Use the [Ruby LSP](https://marketplace.visualstudio.com/items?itemName=Shopify.ruby-lsp) extension in VS code to run the tests. They also check the final solutions.
+- `ruby 2025/01.rb` to get the final solutions for day 1
