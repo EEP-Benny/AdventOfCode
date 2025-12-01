@@ -25,9 +25,23 @@ module Day01
     end
     zero_count
   end
+
+  def part2(input)
+    pos = 50
+    zero_count = 0
+    input.each do |number|
+      (1..number.abs).each do
+        step = number.negative? ? -1 : +1
+        pos = (pos + step) % 100
+        zero_count += 1 if pos.zero?
+      end
+    end
+    zero_count
+  end
 end
 
 if __FILE__ == $PROGRAM_NAME
   input = Day01.prepare_input(get_input(1, 2025))
   puts part1(input)
+  puts part2(input)
 end
