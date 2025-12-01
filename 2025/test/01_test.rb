@@ -3,7 +3,6 @@
 require 'minitest/autorun'
 require_relative '../01'
 
-# :nodoc:
 class TestDay01 < Minitest::Test
   include Day01
 
@@ -38,7 +37,7 @@ class TestDay01 < Minitest::Test
   end
 
   def test_real_input
-    input = prepare_input(get_input(1, 2025))
+    input = prepare_input(real_input)
     assert_equal(1180, part1(input))
     assert_equal(6892, part2(input))
   end

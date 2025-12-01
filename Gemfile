@@ -5,3 +5,5 @@ source 'https://rubygems.org'
 gem 'rubocop', require: false
 
 gem 'minitest', '~> 5.26'
+
+gem "benchmark", "~> 0.5.0"

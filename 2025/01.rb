@@ -3,8 +3,13 @@
 
 require_relative 'utils'
 
-# :nodoc:
 module Day01
+  module_function
+
+  def real_input
+    Utils.get_input(1, 2025)
+  end
+
   def prepare_input(input)
     input.lines.map do |line|
       case line
@@ -38,10 +43,6 @@ module Day01
     end
     zero_count
   end
-end
 
-if __FILE__ == $PROGRAM_NAME
-  input = Day01.prepare_input(get_input(1, 2025))
-  puts part1(input)
-  puts part2(input)
+  Utils.run_benchmark_for(self) if __FILE__ == $PROGRAM_NAME
 end
