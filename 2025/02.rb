@@ -30,13 +30,31 @@ module Day02
     end
   end
 
+  def get_divisors(id)
+    if id <= 9 then []
+    elsif id <= 99 then [10]
+    elsif id <= 999 then [10]
+    elsif id <= 9999 then [10, 10**2]
+    elsif id <= 99_999 then [10]
+    elsif id <= 999_999 then [10, 10**2, 10**3]
+    elsif id <= 9_999_999 then [10]
+    elsif id <= 99_999_999 then [10, 10**2, 10**4]
+    elsif id <= 999_999_999 then [10, 10**3]
+    elsif id <= 9_999_999_999 then [10, 10**2, 10**5]
+    else
+      raise RangeError, "#{id} is bigger than expected"
+    end
+  end
+
   def get_advanced_invalid_ids(range)
     range.filter do |id|
-      length = id.to_s.length
-      possible_split_lengths = (1..length / 2).filter { |n| (length % n).zero? }
-      possible_split_lengths.any? do |split_length|
-        digits = id.digits(10**split_length)
-        digits.all?(digits[0])
+      get_divisors(id).any? do |divisor|
+        rest, split_part = id.divmod(divisor)
+        while rest.positive?
+          rest, test = rest.divmod(divisor)
+          break if test != split_part
+        end
+        test == split_part
       end
     end
   end
