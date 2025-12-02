@@ -32,15 +32,11 @@ module Day02
 
   def get_advanced_invalid_ids(range)
     range.filter do |id|
-      id_string = id.to_s
-      length = id_string.length
-      possible_split_lengths = (1..length / 2).select { |n| (length % n).zero? }
-      # puts id_string
-      # puts possible_split_lengths
+      length = id.to_s.length
+      possible_split_lengths = (1..length / 2).filter { |n| (length % n).zero? }
       possible_split_lengths.any? do |split_length|
-        chunks = (length / split_length).times.map { |i| id_string[i * split_length, split_length] }
-        # puts split_length, ':', chunks
-        chunks.uniq.length == 1
+        digits = id.digits(10**split_length)
+        digits.all?(digits[0])
       end
     end
   end
