@@ -39,6 +39,10 @@ module Day04
         roll_of_paper_at_position? x, y
       end
     end
+
+    def remove_roll_of_paper_at_position!(x, y)
+      grid[y][x] = '.'
+    end
   end
 
   def prepare_input(input)
@@ -55,6 +59,22 @@ module Day04
       if input.roll_of_paper_at_position?(x, y) && input.count_rolls_of_paper_around_position(x, y) < 4
         count_of_accessible_rolls += 1
       end
+    end
+    count_of_accessible_rolls
+  end
+
+  def part2(input)
+    count_of_accessible_rolls = 0
+    loop do
+      count_of_removed_rolls = 0
+      input.each_position do |x, y|
+        if input.roll_of_paper_at_position?(x, y) && input.count_rolls_of_paper_around_position(x, y) < 4
+          input.remove_roll_of_paper_at_position!(x, y)
+          count_of_removed_rolls += 1
+        end
+      end
+      count_of_accessible_rolls += count_of_removed_rolls
+      break if count_of_removed_rolls.zero?
     end
     count_of_accessible_rolls
   end
