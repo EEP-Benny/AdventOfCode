@@ -14,6 +14,21 @@ module Day05
     def fresh_id?(id)
       fresh_id_ranges.any? { |range| range.include? id }
     end
+
+    def merge_fresh_id_ranges
+      sorted_ranges = fresh_id_ranges.sort_by(&:first)
+      merged_ranges = []
+      sorted_ranges.each do |range|
+        last_range = merged_ranges[-1]
+        if last_range&.include? range.first
+          merged_last = [last_range.last, range.last].max
+          merged_ranges[-1] = last_range.first..merged_last
+        else
+          merged_ranges.append(range)
+        end
+      end
+      merged_ranges
+    end
   end
 
   def prepare_input(input)
@@ -29,6 +44,10 @@ module Day05
 
   def part1(input)
     input.ids.count { |id| input.fresh_id?(id) }
+  end
+
+  def part2(input)
+    input.merge_fresh_id_ranges.map(&:size).sum
   end
 
   Utils.run_benchmark_for(self) if __FILE__ == $PROGRAM_NAME

@@ -55,13 +55,20 @@ class TestDay05 < Minitest::Test
     assert_equal(false, input.fresh_id?(32))
   end
 
+  def test_merge_fresh_id_ranges
+    input = prepare_input(@example_input)
+    assert_equal([3..5, 10..20], input.merge_fresh_id_ranges)
+  end
+
   def test_example_input
     input = prepare_input(@example_input)
     assert_equal(3, part1(input))
+    assert_equal(14, part2(input))
   end
 
   def test_real_input
     input = prepare_input(real_input)
     assert_equal(775, part1(input))
+    assert_equal(350_684_792_662_845, part2(input))
   end
 end
