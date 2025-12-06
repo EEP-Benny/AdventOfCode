@@ -11,19 +11,23 @@ module Day06
   end
 
   def prepare_input(input)
-    *number_lines, operations = input.lines
-    [*number_lines.map { |line| line.split.map(&:to_i) }, operations.split.map(&:to_sym)]
+    input # no-op, because parsing differs between parts
   end
 
-  def solve_worksheet(input)
-    input.transpose.map do |problem|
-      *numbers, operator = problem
+  def solve_worksheet(problems)
+    problems.map do |problem|
+      numbers, operator = problem
       numbers.reduce(operator)
     end
   end
 
+  def prepare_input_part1(input)
+    *number_lines, operations = input.lines
+    number_lines.map { |line| line.split.map(&:to_i) }.transpose.zip(operations.split.map(&:to_sym))
+  end
+
   def part1(input)
-    solve_worksheet(input).sum
+    solve_worksheet(prepare_input_part1(input)).sum
   end
 
   Utils.run_benchmark_for(self) if __FILE__ == $PROGRAM_NAME
