@@ -49,5 +49,22 @@ module Day07
     split_count
   end
 
+  def part2(input)
+    current_beams_x = { input.starting_position.x => 1 }
+    (input.starting_position.y..input.max_y).each do |y|
+      new_beams_x = Hash.new(0)
+      current_beams_x.each_pair do |x, count|
+        if input.splitter_positions.include?(Position.new(x, y))
+          new_beams_x[x - 1] += count
+          new_beams_x[x + 1] += count
+        else
+          new_beams_x[x] += count
+        end
+      end
+      current_beams_x = new_beams_x
+    end
+    current_beams_x.values.sum
+  end
+
   Utils.run_benchmark_for(self) if __FILE__ == $PROGRAM_NAME
 end
