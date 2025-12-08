@@ -87,10 +87,12 @@ class TestDay08 < Minitest::Test
   def test_example_input
     input = prepare_input(@example_input)
     assert_equal(40, part1(input))
+    assert_equal(25_272, part2(input))
   end
 
   def test_real_input
     input = prepare_input(real_input)
     assert_equal(83_520, part1(input))
+    assert_equal(1_131_823_407, part2(input))
   end
 end

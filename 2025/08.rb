@@ -28,6 +28,18 @@ module Day08
       end
       circuits.map(&:size).sort.reverse
     end
+
+    def last_necessary_connection
+      circuits = positions.map { |position| Set[position] }
+      connections.each do |pos1, pos2|
+        circuit1 = circuits.find { |circuit| circuit.include? pos1 }
+        circuit2 = circuits.find { |circuit| circuit.include? pos2 }
+        circuits.delete(circuit1)
+        circuits.delete(circuit2)
+        circuits.push(circuit1 | circuit2)
+        return [pos1, pos2] if circuits.size == 1
+      end
+    end
   end
 
   def prepare_input(input)
@@ -45,6 +57,12 @@ module Day08
     connection_count = input.length < 100 ? 10 : 1000 # difference between example and real input
     graph = Graph.new(input, get_shortest_connections(input)[...connection_count])
     graph.circuit_sizes[...3].reduce(:*)
+  end
+
+  def part2(input)
+    graph = Graph.new(input, get_shortest_connections(input))
+    pos1, pos2 = graph.last_necessary_connection
+    pos1.x * pos2.x
   end
 
   Utils.run_benchmark_for(self) if __FILE__ == $PROGRAM_NAME
