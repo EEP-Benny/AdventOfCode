@@ -49,8 +49,9 @@ module Day09
   end
 
   def part2(input)
-    valid_combinations = input.combination(2).filter { |pos1, pos2| valid_rectangle?(pos1, pos2, input) }
-    valid_combinations.map { |pos1, pos2| rectangle_area(pos1, pos2) }.max
+    biggest_rectangles = input.combination(2).sort_by { |pos1, pos2| rectangle_area(pos1, pos2) }.reverse
+    pos1, pos2 = biggest_rectangles.find { |pos1, pos2| valid_rectangle?(pos1, pos2, input) }
+    rectangle_area(pos1, pos2)
   end
 
   Utils.run_benchmark_for(self) if __FILE__ == $PROGRAM_NAME
