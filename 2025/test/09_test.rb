@@ -43,13 +43,25 @@ class TestDay09 < Minitest::Test
     assert_equal(50, rectangle_area(Position.new(2, 5), Position.new(11, 1)))
   end
 
+  def test_valid_rectangle?
+    all_positions = prepare_input(@example_input)
+    assert_equal(false, valid_rectangle?(Position.new(2, 5), Position.new(11, 1), all_positions))
+    assert_equal(false, valid_rectangle?(Position.new(7, 1), Position.new(2, 5), all_positions))
+    assert_equal(false, valid_rectangle?(Position.new(11, 1), Position.new(2, 3), all_positions))
+    assert_equal(true, valid_rectangle?(Position.new(7, 3), Position.new(11, 1), all_positions))
+    assert_equal(true, valid_rectangle?(Position.new(9, 7), Position.new(9, 5), all_positions))
+    assert_equal(true, valid_rectangle?(Position.new(9, 5), Position.new(2, 3), all_positions))
+  end
+
   def test_example_input
     input = prepare_input(@example_input)
     assert_equal(50, part1(input))
+    assert_equal(24, part2(input))
   end
 
   def test_real_input
     input = prepare_input(real_input)
     assert_equal(4_781_377_701, part1(input))
+    assert_equal(1_470_616_992, part2(input))
   end
 end
