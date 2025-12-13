@@ -38,13 +38,28 @@ class TestDay10 < Minitest::Test
     )
   end
 
+  def test_fewest_presses_partial
+    assert_equal(0, fewest_presses_partial([[0]], [0, 0, 0])) # everything 0
+    assert_equal(10, fewest_presses_partial([[0]], [10, 0, 0])) # just this one button
+    assert_equal(nil, fewest_presses_partial([[0]], [0, 1])) # not possible
+  end
+
+  def test_fewest_joltage_button_presses
+    machines = prepare_input(@example_input)
+    assert_equal(10, machines[0].fewest_joltage_button_presses)
+    assert_equal(12, machines[1].fewest_joltage_button_presses)
+    assert_equal(11, machines[2].fewest_joltage_button_presses)
+  end
+
   def test_example_input
     input = prepare_input(@example_input)
     assert_equal(7, part1(input))
+    assert_equal(33, part2(input))
   end
 
   def test_real_input
     input = prepare_input(real_input)
     assert_equal(494, part1(input))
+    assert_equal(494, part2(input))
   end
 end
