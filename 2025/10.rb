@@ -10,35 +10,6 @@ module Day10
     Utils.get_input(10, 2025)
   end
 
-  def fewest_presses_partial(buttons, joltages)
-    return 0 if joltages.all?(0)
-
-    button, *remaining_buttons = buttons
-
-    # otherwise one joltage would be too high
-    max_presses = joltages.values_at(*button).min
-
-    indices_not_covered_by_remaining_buttons = remaining_buttons.reduce(
-      joltages.each_index.to_set
-    ) { |set_of_indices, button| set_of_indices - button.to_set }
-
-    # otherwise there is no way to reach the joltage with the remaining buttons
-    min_presses = joltages.values_at(*indices_not_covered_by_remaining_buttons).max || 0
-
-    # puts "Trying #{joltages}, #{buttons}, #{min_presses}..#{max_presses}"
-
-    max_presses.downto(min_presses) do |presses|
-      remaining_joltages = [*joltages]
-      button.each do |index|
-        remaining_joltages[index] -= presses
-      end
-      remaining_presses = fewest_presses_partial(remaining_buttons, remaining_joltages)
-      return presses + remaining_presses if remaining_presses
-    end
-
-    nil # no valid solution
-  end
-
   Machine = Struct.new(:lights, :buttons, :joltages) do
     def fewest_light_button_presses
       buttons.length.times.each do |number_of_buttons|
@@ -56,9 +27,44 @@ module Day10
     end
 
     def fewest_joltage_button_presses
-      puts "Solving for #{joltages}, #{buttons}"
-      sorted_buttons = buttons.sort_by(&:length).reverse
-      Day10.fewest_presses_partial(sorted_buttons, joltages)
+      @joltage_cache = {}
+      @parity_cache = Hash.new { |h, k| h[k] = [] }
+
+      (buttons.length + 1).times.each do |number_of_buttons|
+        buttons.combination(number_of_buttons).each do |buttons_to_press|
+          joltages = Array.new(lights.length) { 0 } # initially all lights are off
+          buttons_to_press.each do |button_to_press|
+            button_to_press.each do |joltage_to_increase|
+              joltages[joltage_to_increase] += 1
+            end
+          end
+          parity = joltages.map { |j| j % 2 }
+          @parity_cache[parity].push([number_of_buttons, joltages])
+        end
+      end
+
+      def fewest_joltage_button_presses_inner(joltages_to_test)
+        cached_value = @joltage_cache[joltages_to_test]
+        return cached_value if cached_value
+
+        return 0 if joltages_to_test.all?(&:zero?)
+
+        parity = joltages_to_test.map { |j| j % 2 }
+        joltage_button_presses = @parity_cache[parity].map do |number_of_buttons, joltages|
+          remaining_joltages = joltages_to_test.zip(joltages).map { |a, b| (a - b) / 2 }
+
+          if remaining_joltages.any?(&:negative?)
+            Float::INFINITY
+          else
+            number_of_buttons + 2 * fewest_joltage_button_presses_inner(remaining_joltages)
+          end
+        end
+        value = joltage_button_presses.min || Float::INFINITY
+        @joltage_cache[joltages_to_test] = value
+        value
+      end
+
+      fewest_joltage_button_presses_inner(joltages)
     end
   end
 
